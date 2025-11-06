@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>注文フォーム</title>
+<style>
+  body{font-family:system-ui,Meiryo,Segoe UI;background:#f6f8fb;padding:14px;color:#111}
+  .wrap{max-width:900px;margin:0 auto}
+  .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(20,30,60,0.04)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .product-card{padding:12px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff)}
+  .title{font-weight:700;margin-bottom:6px}
+  .meta{font-size:0.9rem;color:#666}
+  input[type=number]{width:80px;padding:6px;border-radius:8px;border:1px solid #e6eefc}
+  .total{font-weight:800;text-align:right;margin-top:8px}
+  .btn{background:#1976d2;color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
+  .btn.ghost{background:#f1f5f9;color:#111;border:1px solid #e6eefc}
+  .section{margin-top:20px}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:0.9rem}
+  th,td{padding:6px;border-bottom:1px solid #eef2f7;text-align:left}
+</style>
+</head>
+<body>
+<div class="wrap card">
+  <h2>注文フォーム</h2>
+
+  <div style="margin-bottom:10px">
+    <label>番号</label>
+    <input id="userNumber" placeholder="例: 001" style="width:120px;margin-right:8px">
+    <label>名前</label>
+    <input id="userName" placeholder="例: 山田太郎" style="width:200px">
+  </div>
+
+  <div id="productGrid" class="grid"></div>
+
+  <div class="total" id="grandTotal">合計：¥0</div>
+
+  <div style="text-align:center;margin-top:12px">
+    <button id="submitBtn" class="btn">送信する</button>
+    <button id="historyBtn" class="btn ghost">注文履歴を見る</button>
+  </div>
+
+  <div id="msg" style="margin-top:12px;display:none;padding:10px;border-radius:8px"></div>
+
+  <div class="section" id="historySection" style="display:none;">
+    <h3>注文履歴（自分のみ）</h3>
+    <table id="historyTable">
+      <thead>
+        <tr><th>日時</th><th>番号</th><th>名前</th><th>商品名</th><th>産地</th><th>規格</th><th>入り数</th><th>単価</th><th>数量</th><th>小計</th><th>合計</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const API_BASE = 'https://script.google.com/macros/s/AKfycbxuj2S_XibNn_TbLNH46cJHg79VoQbGvVGwbKTn0mxKULioCxUkrAXl0ORGRj75L_tD/exec'; // ← あなたのGASのWebアプリURLに置き換えてください
+const ORDER_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz488tuvST1rM5-Pq0hhJR0aY1IHlHb0cVifJNPgvvmGLp13eZsDi9AEkJh-XEtSj39/exec'; // 既存送信先
+
+let products = [];
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"]+/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c] || c); }
+
+async function apiGetProducts(){ const res = await fetch(API_BASE + '?action=getProducts'); return res.json(); }
+async function apiGetOrders(){ const res = await fetch(API_BASE + '?action=getOrders'); return res.json(); }
+
+async function init(){
+  try{
+    const j = await apiGetProducts();
+    if(!j.success) throw new Error(j.error||'API error');
+    products = j.products;
+    renderProducts(products);
+  }catch(e){
+    alert('商品読み込み失敗: '+e.message);
+  }
+}
+
+const productGrid = document.getElementById('productGrid');
+const grandTotalEl = document.getElementById('grandTotal');
+
+function renderProducts(list){
+  productGrid.innerHTML = '';
+  list.forEach((p,i)=>{
+    const div = document.createElement('div');
+    div.className='product-card';
+    div.innerHTML = `<div class="title">${escapeHtml(p.name)}</div>
+      <div class="meta">産地: ${escapeHtml(p.origin)} ・ 規格: ${escapeHtml(p.spec||'')} ・ 入り数: ${p.pack} ・ 単価: ¥${Number(p.price).toLocaleString()}</div>
+      <div style="margin-top:8px">数量: <input type="number" min="0" value="0" data-i="${i}" class="qty"></div>
+      <div style="margin-top:6px;text-align:right">小計: <span class="rowSub">¥0</span></div>`;
+    productGrid.appendChild(div);
+  });
+  attachQtyHandlers();
+}
+
+function attachQtyHandlers(){
+  document.querySelectorAll('.qty').forEach(inp=> inp.oninput = ()=>{
+    const idx = +inp.dataset.i;
+    const q = Number(inp.value)||0;
+    const p = products[idx];
+    const sub = p.price * p.pack * q;
+    inp.closest('.product-card').querySelector('.rowSub').textContent = '¥' + sub.toLocaleString();
+    updateGrandTotal();
+  });
+}
+
+function updateGrandTotal(){
+  let sum=0;
+  document.querySelectorAll('.qty').forEach(inp=>{
+    const q=Number(inp.value)||0;
+    const p = products[+inp.dataset.i];
+    sum += p.price * p.pack * q;
+  });
+  grandTotalEl.textContent = '合計：¥' + sum.toLocaleString();
+}
+
+document.getElementById('submitBtn').onclick = async ()=>{
+  const userNumber = document.getElementById('userNumber').value.trim();
+  const userName = document.getElementById('userName').value.trim();
+  if(!userNumber || !userName) return alert('番号と名前を入力してください');
+  const items = [];
+  let total = 0;
+  document.querySelectorAll('.qty').forEach(inp=>{
+    const q = Number(inp.value)||0;
+    if(q>0){
+      const p
