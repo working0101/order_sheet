@@ -1,125 +1,276 @@
-<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>注文フォーム</title>
-<style>
-  body{font-family:system-ui,Meiryo,Segoe UI;background:#f6f8fb;padding:14px;color:#111}
-  .wrap{max-width:900px;margin:0 auto}
-  .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(20,30,60,0.04)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .product-card{padding:12px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff)}
-  .title{font-weight:700;margin-bottom:6px}
-  .meta{font-size:0.9rem;color:#666}
-  input[type=number]{width:80px;padding:6px;border-radius:8px;border:1px solid #e6eefc}
-  .total{font-weight:800;text-align:right;margin-top:8px}
-  .btn{background:#1976d2;color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
-  .btn.ghost{background:#f1f5f9;color:#111;border:1px solid #e6eefc}
-  .section{margin-top:20px}
-  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:0.9rem}
-  th,td{padding:6px;border-bottom:1px solid #eef2f7;text-align:left}
-</style>
-</head>
-<body>
-<div class="wrap card">
-  <h2>注文フォーム</h2>
+<!-- 発注入力フォーム（index.html に追加してください） -->
+<div id="panelOrderEntry" class="card" style="margin-top:12px">
+  <h3>発注入力</h3>
 
-  <div style="margin-bottom:10px">
-    <label>番号</label>
-    <input id="userNumber" placeholder="例: 001" style="width:120px;margin-right:8px">
-    <label>名前</label>
-    <input id="userName" placeholder="例: 山田太郎" style="width:200px">
-  </div>
+  <div class="row" style="align-items:flex-start;">
+    <div style="flex:1; min-width:420px">
+      <div class="row" style="gap:12px; margin-bottom:8px;">
+        <input id="orderNumber" placeholder="発注番号（自動）" style="width:200px">
+        <input id="orderDate" type="date" style="width:160px">
+        <input id="orderBy" placeholder="発注者名" style="width:220px">
+      </div>
 
-  <div id="productGrid" class="grid"></div>
+      <div id="linesWrap" style="border:1px dashed #e6eefc;padding:8px;border-radius:8px;background:#fbfdff">
+        <div class="small" style="margin-bottom:8px">明細</div>
+        <table id="entryTable" style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="width:32%;">商品</th>
+              <th style="width:12%;">産地</th>
+              <th style="width:12%;">規格</th>
+              <th style="width:10%;">入り数</th>
+              <th style="width:10%;">単価</th>
+              <th style="width:8%;">数量</th>
+              <th style="width:12%;">小計</th>
+              <th style="width:4%;"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div style="margin-top:8px">
+          <button id="addLineBtn" class="btn ghost">行を追加</button>
+        </div>
+      </div>
 
-  <div class="total" id="grandTotal">合計：¥0</div>
+    </div>
 
-  <div style="text-align:center;margin-top:12px">
-    <button id="submitBtn" class="btn">送信する</button>
-    <button id="historyBtn" class="btn ghost">注文履歴を見る</button>
-  </div>
-
-  <div id="msg" style="margin-top:12px;display:none;padding:10px;border-radius:8px"></div>
-
-  <div class="section" id="historySection" style="display:none;">
-    <h3>注文履歴（自分のみ）</h3>
-    <table id="historyTable">
-      <thead>
-        <tr><th>日時</th><th>番号</th><th>名前</th><th>商品名</th><th>産地</th><th>規格</th><th>入り数</th><th>単価</th><th>数量</th><th>小計</th><th>合計</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div style="width:320px; margin-left:12px">
+      <div class="card" style="padding:12px">
+        <div class="small">合計</div>
+        <h2 id="totalAmt">¥0</h2>
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <button id="submitOrder" class="btn">発注登録</button>
+          <button id="clearOrder" class="btn ghost">クリア</button>
+        </div>
+        <div id="entryMsg" class="small" style="margin-top:8px;color:#b33"></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-const API_BASE = 'https://script.google.com/macros/s/AKfycbw9vMYkPaMOYIhOASSNNMj4YzYZJL_1PJQCKw_Vy4jfUNbpWOKBw-4PaxGZuYJuETVZ/exec'; // ← あなたのGASのWebアプリURLに置き換えてください
-const ORDER_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz488tuvST1rM5-Pq0hhJR0aY1IHlHb0cVifJNPgvvmGLp13eZsDi9AEkJh-XEtSj39/exec'; // 既存送信先
+/* ---- 設定: 既存の index.html と同じ API_BASE を使います ---- */
+const API_BASE = window.API_BASE || 'https://script.google.com/macros/s/AKfycbxuj2S_XibNn_TbLNH46cJHg79VoQbGvVGwbKTn0mxKULioCxUkrAXl0ORGRj75L_tD/exec';
 
-let products = [];
+/* DOM */
+const entryTableBody = document.querySelector('#entryTable tbody');
+const addLineBtn = document.getElementById('addLineBtn');
+const totalAmtEl = document.getElementById('totalAmt');
+const submitOrderBtn = document.getElementById('submitOrder');
+const clearOrderBtn = document.getElementById('clearOrder');
+const orderNumberEl = document.getElementById('orderNumber');
+const orderDateEl = document.getElementById('orderDate');
+const orderByEl = document.getElementById('orderBy');
+const entryMsg = document.getElementById('entryMsg');
 
-function escapeHtml(s){ return String(s||'').replace(/[&<>"]+/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c] || c); }
+let productsForSelect = []; // APIから取得する商品リスト
 
-async function apiGetProducts(){ const res = await fetch(API_BASE + '?action=getProducts'); return res.json(); }
-async function apiGetOrders(){ const res = await fetch(API_BASE + '?action=getOrders'); return res.json(); }
-
-async function init(){
+// API 呼び出し（必要に応じてサーバ側の action 名を合わせてください）
+async function apiGetProductsForEntry(){
   try{
-    const j = await apiGetProducts();
-    if(!j.success) throw new Error(j.error||'API error');
-    products = j.products;
-    renderProducts(products);
-  }catch(e){
-    alert('商品読み込み失敗: '+e.message);
+    const res = await fetch(API_BASE + '?action=getProducts');
+    return await res.json();
+  }catch(e){ console.error(e); return { success:false, error: e.message }; }
+}
+async function apiSubmitOrder(payload){
+  try{
+    const res = await fetch(API_BASE, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ action:'addOrder', order: payload })
+    });
+    return await res.json();
+  }catch(e){ console.error(e); throw e; }
+}
+
+/* ユーティリティ */
+function formatYen(n){ return '¥' + Number(n||0).toLocaleString(); }
+function nowISODate(){ const d=new Date(); const yyyy=d.getFullYear(); const mm=('0'+(d.getMonth()+1)).slice(-2); const dd=('0'+d.getDate()).slice(-2); return `${yyyy}-${mm}-${dd}`; }
+function genOrderNumber(){ const d=new Date(); return 'PO' + d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2) + '-' + String(Math.floor(Math.random()*9000)+1000); }
+
+/* 行の生成 */
+function createLineRow(item){
+  // itemが与えられれば値をセット（編集時用）
+  const tr = document.createElement('tr');
+
+  tr.innerHTML = `
+    <td>
+      <select class="selProduct" style="width:100%;padding:6px;border-radius:6px;border:1px solid #e6eefc"></select>
+    </td>
+    <td><input class="cell origin" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7"></td>
+    <td><input class="cell spec" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7"></td>
+    <td><input class="cell pack" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7;text-align:right"></td>
+    <td><input class="cell price" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7;text-align:right"></td>
+    <td><input class="cell quantity" type="number" min="1" value="${item?.quantity||1}" style="width:100%;padding:6px;border-radius:6px;border:1px solid #e6eefc;text-align:right"></td>
+    <td><div class="cell subtotal" style="padding:6px;text-align:right">${formatYen(item?.subtotal||0)}</div></td>
+    <td><button class="delLineBtn btn ghost" type="button">×</button></td>
+  `;
+
+  // populate products select
+  const sel = tr.querySelector('.selProduct');
+  sel.innerHTML = '<option value="">-- 選択 --</option>';
+  productsForSelect.forEach(p=>{
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.name} (${p.origin}) ${p.spec ? ' / ' + p.spec : ''}`;
+    opt.dataset.price = p.price;
+    opt.dataset.origin = p.origin;
+    opt.dataset.spec = p.spec || '';
+    opt.dataset.pack = p.pack;
+    sel.appendChild(opt);
+  });
+
+  // if item given, set selection
+  if(item && item.productId){
+    sel.value = item.productId;
+    fillProductFieldsFromOption(sel);
   }
+
+  // events
+  sel.onchange = ()=> fillProductFieldsFromOption(sel);
+  const qty = tr.querySelector('.quantity');
+  qty.oninput = ()=> updateSubtotalForRow(tr);
+  tr.querySelector('.delLineBtn').onclick = ()=> { tr.remove(); recalcTotal(); };
+
+  entryTableBody.appendChild(tr);
+  return tr;
 }
 
-const productGrid = document.getElementById('productGrid');
-const grandTotalEl = document.getElementById('grandTotal');
-
-function renderProducts(list){
-  productGrid.innerHTML = '';
-  list.forEach((p,i)=>{
-    const div = document.createElement('div');
-    div.className='product-card';
-    div.innerHTML = `<div class="title">${escapeHtml(p.name)}</div>
-      <div class="meta">産地: ${escapeHtml(p.origin)} ・ 規格: ${escapeHtml(p.spec||'')} ・ 入り数: ${p.pack} ・ 単価: ¥${Number(p.price).toLocaleString()}</div>
-      <div style="margin-top:8px">数量: <input type="number" min="0" value="0" data-i="${i}" class="qty"></div>
-      <div style="margin-top:6px;text-align:right">小計: <span class="rowSub">¥0</span></div>`;
-    productGrid.appendChild(div);
-  });
-  attachQtyHandlers();
+function fillProductFieldsFromOption(sel){
+  const tr = sel.closest('tr');
+  const opt = sel.selectedOptions[0];
+  if(!opt || !opt.value){
+    tr.querySelector('.origin').value = '';
+    tr.querySelector('.spec').value = '';
+    tr.querySelector('.pack').value = '';
+    tr.querySelector('.price').value = '';
+    tr.querySelector('.quantity').value = 1;
+    tr.querySelector('.subtotal').textContent = formatYen(0);
+    recalcTotal();
+    return;
+  }
+  tr.querySelector('.origin').value = opt.dataset.origin||'';
+  tr.querySelector('.spec').value = opt.dataset.spec||'';
+  tr.querySelector('.pack').value = opt.dataset.pack||'1';
+  tr.querySelector('.price').value = Number(opt.dataset.price||0).toLocaleString();
+  updateSubtotalForRow(tr);
 }
 
-function attachQtyHandlers(){
-  document.querySelectorAll('.qty').forEach(inp=> inp.oninput = ()=>{
-    const idx = +inp.dataset.i;
-    const q = Number(inp.value)||0;
-    const p = products[idx];
-    const sub = p.price * p.pack * q;
-    inp.closest('.product-card').querySelector('.rowSub').textContent = '¥' + sub.toLocaleString();
-    updateGrandTotal();
-  });
+function updateSubtotalForRow(tr){
+  const price = Number(tr.querySelector('.selProduct').selectedOptions[0]?.dataset.price || 0);
+  const qty = Number(tr.querySelector('.quantity').value || 0);
+  const subtotal = price * qty;
+  tr.querySelector('.subtotal').textContent = formatYen(subtotal);
+  recalcTotal();
 }
 
-function updateGrandTotal(){
-  let sum=0;
-  document.querySelectorAll('.qty').forEach(inp=>{
-    const q=Number(inp.value)||0;
-    const p = products[+inp.dataset.i];
-    sum += p.price * p.pack * q;
-  });
-  grandTotalEl.textContent = '合計：¥' + sum.toLocaleString();
-}
-
-document.getElementById('submitBtn').onclick = async ()=>{
-  const userNumber = document.getElementById('userNumber').value.trim();
-  const userName = document.getElementById('userName').value.trim();
-  if(!userNumber || !userName) return alert('番号と名前を入力してください');
-  const items = [];
+function recalcTotal(){
   let total = 0;
-  document.querySelectorAll('.qty').forEach(inp=>{
-    const q = Number(inp.value)||0;
-    if(q>0){
-      const p
+  entryTableBody.querySelectorAll('tr').forEach(tr=>{
+    const text = tr.querySelector('.subtotal').textContent || '¥0';
+    const num = Number(String(text).replace(/[^\d.-]/g,'')) || 0;
+    total += num;
+  });
+  totalAmtEl.textContent = formatYen(total);
+}
+
+/* フォーム操作 */
+addLineBtn.onclick = ()=> createLineRow();
+
+clearOrderBtn.onclick = ()=>{
+  entryTableBody.innerHTML = '';
+  orderNumberEl.value = genOrderNumber();
+  orderDateEl.value = nowISODate();
+  orderByEl.value = '';
+  totalAmtEl.textContent = formatYen(0);
+  entryMsg.textContent = '';
+};
+
+submitOrderBtn.onclick = async ()=>{
+  entryMsg.textContent = '';
+  // validate
+  const rows = Array.from(entryTableBody.querySelectorAll('tr'));
+  if(rows.length === 0) { entryMsg.textContent = '明細が1行以上必要です'; return; }
+  const orderBy = orderByEl.value.trim();
+  if(!orderBy) { entryMsg.textContent = '発注者名を入力してください'; return; }
+  const orderDate = orderDateEl.value || nowISODate();
+  const orderNumber = orderNumberEl.value || genOrderNumber();
+
+  const lines = [];
+  for(const tr of rows){
+    const sel = tr.querySelector('.selProduct');
+    const pid = sel.value;
+    if(!pid){ entryMsg.textContent = '商品が未選択の行があります'; return; }
+    const product = productsForSelect.find(p=>String(p.id) === String(pid));
+    const qty = Number(tr.querySelector('.quantity').value) || 0;
+    if(qty <= 0){ entryMsg.textContent = '数量は1以上にしてください'; return; }
+    const price = Number(product.price) || 0;
+    lines.push({
+      productId: product.id,
+      productName: product.name,
+      origin: product.origin,
+      spec: product.spec || '',
+      pack: product.pack,
+      price: price,
+      quantity: qty,
+      subtotal: price * qty
+    });
+  }
+
+  const total = lines.reduce((s,l)=>s + (l.subtotal||0), 0);
+  const payload = {
+    number: orderNumber,
+    date: orderDate,
+    orderBy,
+    total,
+    lines
+  };
+
+  // submit
+  submitOrderBtn.disabled = true;
+  submitOrderBtn.textContent = '送信中...';
+  try{
+    const res = await apiSubmitOrder(payload);
+    if(res && res.success){
+      alert('発注を登録しました');
+      clearOrderBtn.click();
+    }else{
+      console.error(res);
+      entryMsg.textContent = '登録失敗: ' + (res?.error || 'サーバエラー');
+    }
+  }catch(e){
+    console.error(e);
+    entryMsg.textContent = '通信エラー: ' + (e.message || e);
+  }finally{
+    submitOrderBtn.disabled = false;
+    submitOrderBtn.textContent = '発注登録';
+  }
+};
+
+/* 初期化: 商品取得して1行追加、日付/番号セット */
+(async function initEntry(){
+  // set default date & number
+  orderDateEl.value = nowISODate();
+  orderNumberEl.value = genOrderNumber();
+
+  const j = await apiGetProductsForEntry();
+  if(j && j.success && Array.isArray(j.products)){
+    // products should contain id,name,origin,spec,pack,price
+    productsForSelect = j.products.map(p=>({
+      id: p.id,
+      name: p.name,
+      origin: p.origin,
+      spec: p.spec || '',
+      pack: p.pack || 1,
+      price: Number(p.price) || 0
+    }));
+  }else{
+    // API 失敗時は最低限空のダミーを用意
+    console.warn('商品取得失敗', j);
+    productsForSelect = [];
+  }
+  // add one blank line
+  createLineRow();
+  recalcTotal();
+})();
+</script>
