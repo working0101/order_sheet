@@ -1,276 +1,240 @@
-<!-- 発注入力フォーム（index.html に追加してください） -->
-<div id="panelOrderEntry" class="card" style="margin-top:12px">
-  <h3>発注入力</h3>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>発注フォーム</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Meiryo;padding:16px;background:#f6f8fb;color:#111}
+  .wrap{max-width:1100px;margin:0 auto}
+  .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(20,30,60,0.04);margin-bottom:20px}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left}
+  input[type=number], input[type=text]{padding:6px;border:1px solid #e6eefc;border-radius:6px}
+  input[type=number]{width:80px}
+  .btn{background:#1976d2;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .btn.ghost{background:#15ed76;color:#111;border:1px solid #e6eefc}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .totalArea{margin-top:16px;text-align:right;font-weight:600;font-size:1.1rem}
+  .infoRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  #historySection{display:none;}
+  .filter{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .small{font-size:0.9rem;color:#666}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h2>発注フォーム</h2>
+    <button id="btnHistory" class="btn ghost" type="button">履歴</button>
+  </div>
 
-  <div class="row" style="align-items:flex-start;">
-    <div style="flex:1; min-width:420px">
-      <div class="row" style="gap:12px; margin-bottom:8px;">
-        <input id="orderNumber" placeholder="発注番号（自動）" style="width:200px">
-        <input id="orderDate" type="date" style="width:160px">
-        <input id="orderBy" placeholder="発注者名" style="width:220px">
-      </div>
-
-      <div id="linesWrap" style="border:1px dashed #e6eefc;padding:8px;border-radius:8px;background:#fbfdff">
-        <div class="small" style="margin-bottom:8px">明細</div>
-        <table id="entryTable" style="width:100%;border-collapse:collapse">
-          <thead>
-            <tr>
-              <th style="width:32%;">商品</th>
-              <th style="width:12%;">産地</th>
-              <th style="width:12%;">規格</th>
-              <th style="width:10%;">入り数</th>
-              <th style="width:10%;">単価</th>
-              <th style="width:8%;">数量</th>
-              <th style="width:12%;">小計</th>
-              <th style="width:4%;"></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div style="margin-top:8px">
-          <button id="addLineBtn" class="btn ghost">行を追加</button>
-        </div>
-      </div>
-
+  <!-- 発注フォーム -->
+  <div class="card">
+    <div class="infoRow">
+      <input id="storeNumber" type="text" placeholder="店番" style="width:120px">
+      <input id="name" type="text" placeholder="店舗名" style="width:200px">
     </div>
 
-    <div style="width:320px; margin-left:12px">
-      <div class="card" style="padding:12px">
-        <div class="small">合計</div>
-        <h2 id="totalAmt">¥0</h2>
-        <div style="margin-top:8px;display:flex;gap:8px;">
-          <button id="submitOrder" class="btn">発注登録</button>
-          <button id="clearOrder" class="btn ghost">クリア</button>
-        </div>
-        <div id="entryMsg" class="small" style="margin-top:8px;color:#b33"></div>
-      </div>
+    <table id="orderTable">
+      <thead>
+        <tr><th>産地</th><th>商品名</th><th>規格</th><th>入り数</th><th>単価</th><th>数量</th><th>小計</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="totalArea">合計：¥<span id="grandTotal">0</span></div>
+
+    <div style="margin-top:12px;text-align:right">
+      <button id="btnSubmit" class="btn">発注する</button>
+    </div>
+  </div>
+
+  <!-- 注文履歴 -->
+    <div id="historySection" class="card">
+  <h3>注文履歴</h3>
+  <div id="historyTotal" style="font-weight:600;margin-bottom:8px;">合計金額：¥0</div> 
+
+    <div class="filter">
+      <input id="filterNumber" placeholder="店番で検索" style="width:160px">
+      <input id="filterName" placeholder="店舗名検索" style="width:200px">
+      <button id="btnFilter" class="btn ghost">フィルタ</button>
+      <button id="btnClear" class="btn ghost">解除</button>
+      <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
+    </div>
+    <div style="overflow:auto;max-height:420px">
+      <table id="ordersTable">
+        <thead><tr><th>日時</th><th>店番</th><th>店舗名</th><th>商品名</th><th>産地</th><th>規格</th><th>入り数</th><th>単価</th><th>数量</th><th>小計</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 </div>
 
 <script>
-/* ---- 設定: 既存の index.html と同じ API_BASE を使います ---- */
-const API_BASE = window.API_BASE || 'https://script.google.com/macros/s/AKfycbxuj2S_XibNn_TbLNH46cJHg79VoQbGvVGwbKTn0mxKULioCxUkrAXl0ORGRj75L_tD/exec';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbz841T07OuGVY-mgG3LqCxup2TA4aNKqbFCNF_oX02dmaaDIjOJPBNvLBgZzKN2WlVd/exec'; // あなたのGAS URLに変更
+const tbody = document.querySelector('#orderTable tbody');
+const grandTotalEl = document.getElementById('grandTotal');
+const btnHistory = document.getElementById('btnHistory');
+const btnSubmit = document.getElementById('btnSubmit');
+const storeNumberEl = document.getElementById('storeNumber');
+const nameEl = document.getElementById('name');
+const historySection = document.getElementById('historySection');
 
-/* DOM */
-const entryTableBody = document.querySelector('#entryTable tbody');
-const addLineBtn = document.getElementById('addLineBtn');
-const totalAmtEl = document.getElementById('totalAmt');
-const submitOrderBtn = document.getElementById('submitOrder');
-const clearOrderBtn = document.getElementById('clearOrder');
-const orderNumberEl = document.getElementById('orderNumber');
-const orderDateEl = document.getElementById('orderDate');
-const orderByEl = document.getElementById('orderBy');
-const entryMsg = document.getElementById('entryMsg');
+let products = [];
+let orders = [];
 
-let productsForSelect = []; // APIから取得する商品リスト
+function escapeHtml(s){return String(s||'').replace(/[&<>"]+/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c));}
 
-// API 呼び出し（必要に応じてサーバ側の action 名を合わせてください）
-async function apiGetProductsForEntry(){
-  try{
-    const res = await fetch(API_BASE + '?action=getProducts');
-    return await res.json();
-  }catch(e){ console.error(e); return { success:false, error: e.message }; }
-}
-async function apiSubmitOrder(payload){
-  try{
-    const res = await fetch(API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ action:'addOrder', order: payload })
-    });
-    return await res.json();
-  }catch(e){ console.error(e); throw e; }
+async function apiGetProducts(){
+  const res = await fetch(API_BASE+'?action=getProducts');
+  return res.json();
 }
 
-/* ユーティリティ */
-function formatYen(n){ return '¥' + Number(n||0).toLocaleString(); }
-function nowISODate(){ const d=new Date(); const yyyy=d.getFullYear(); const mm=('0'+(d.getMonth()+1)).slice(-2); const dd=('0'+d.getDate()).slice(-2); return `${yyyy}-${mm}-${dd}`; }
-function genOrderNumber(){ const d=new Date(); return 'PO' + d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2) + '-' + String(Math.floor(Math.random()*9000)+1000); }
+async function apiGetOrders(){
+  const res = await fetch(API_BASE+'?action=getOrders');
+  return res.json();
+}
 
-/* 行の生成 */
-function createLineRow(item){
-  // itemが与えられれば値をセット（編集時用）
-  const tr = document.createElement('tr');
-
-  tr.innerHTML = `
-    <td>
-      <select class="selProduct" style="width:100%;padding:6px;border-radius:6px;border:1px solid #e6eefc"></select>
-    </td>
-    <td><input class="cell origin" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7"></td>
-    <td><input class="cell spec" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7"></td>
-    <td><input class="cell pack" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7;text-align:right"></td>
-    <td><input class="cell price" readonly style="width:100%;padding:6px;border-radius:6px;border:1px solid #f0f2f7;text-align:right"></td>
-    <td><input class="cell quantity" type="number" min="1" value="${item?.quantity||1}" style="width:100%;padding:6px;border-radius:6px;border:1px solid #e6eefc;text-align:right"></td>
-    <td><div class="cell subtotal" style="padding:6px;text-align:right">${formatYen(item?.subtotal||0)}</div></td>
-    <td><button class="delLineBtn btn ghost" type="button">×</button></td>
-  `;
-
-  // populate products select
-  const sel = tr.querySelector('.selProduct');
-  sel.innerHTML = '<option value="">-- 選択 --</option>';
-  productsForSelect.forEach(p=>{
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = `${p.name} (${p.origin}) ${p.spec ? ' / ' + p.spec : ''}`;
-    opt.dataset.price = p.price;
-    opt.dataset.origin = p.origin;
-    opt.dataset.spec = p.spec || '';
-    opt.dataset.pack = p.pack;
-    sel.appendChild(opt);
+function renderTable(){
+  tbody.innerHTML = '';
+  products.forEach((p,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(p.origin)}</td>
+      <td>${escapeHtml(p.name)}</td>
+      <td>${escapeHtml(p.spec||'')}</td>
+      <td>${p.pack}</td>
+      <td>¥${Number(p.price).toLocaleString()}</td>
+      <td><input type="number" min="0" value="0" data-index="${i}"></td>
+      <td class="subtotal" id="sub${i}">¥0</td>`;
+    tbody.appendChild(tr);
   });
-
-  // if item given, set selection
-  if(item && item.productId){
-    sel.value = item.productId;
-    fillProductFieldsFromOption(sel);
-  }
-
-  // events
-  sel.onchange = ()=> fillProductFieldsFromOption(sel);
-  const qty = tr.querySelector('.quantity');
-  qty.oninput = ()=> updateSubtotalForRow(tr);
-  tr.querySelector('.delLineBtn').onclick = ()=> { tr.remove(); recalcTotal(); };
-
-  entryTableBody.appendChild(tr);
-  return tr;
 }
 
-function fillProductFieldsFromOption(sel){
-  const tr = sel.closest('tr');
-  const opt = sel.selectedOptions[0];
-  if(!opt || !opt.value){
-    tr.querySelector('.origin').value = '';
-    tr.querySelector('.spec').value = '';
-    tr.querySelector('.pack').value = '';
-    tr.querySelector('.price').value = '';
-    tr.querySelector('.quantity').value = 1;
-    tr.querySelector('.subtotal').textContent = formatYen(0);
-    recalcTotal();
-    return;
-  }
-  tr.querySelector('.origin').value = opt.dataset.origin||'';
-  tr.querySelector('.spec').value = opt.dataset.spec||'';
-  tr.querySelector('.pack').value = opt.dataset.pack||'1';
-  tr.querySelector('.price').value = Number(opt.dataset.price||0).toLocaleString();
-  updateSubtotalForRow(tr);
-}
-
-function updateSubtotalForRow(tr){
-  const price = Number(tr.querySelector('.selProduct').selectedOptions[0]?.dataset.price || 0);
-  const qty = Number(tr.querySelector('.quantity').value || 0);
-  const subtotal = price * qty;
-  tr.querySelector('.subtotal').textContent = formatYen(subtotal);
-  recalcTotal();
-}
-
-function recalcTotal(){
+function calcTotals(){
   let total = 0;
-  entryTableBody.querySelectorAll('tr').forEach(tr=>{
-    const text = tr.querySelector('.subtotal').textContent || '¥0';
-    const num = Number(String(text).replace(/[^\d.-]/g,'')) || 0;
-    total += num;
+  products.forEach((p,i)=>{
+    const qty = Number(document.querySelector(`input[data-index="${i}"]`).value)||0;
+    const subtotal = p.pack * p.price * qty;
+    document.getElementById(`sub${i}`).textContent = '¥'+subtotal.toLocaleString();
+    total += subtotal;
   });
-  totalAmtEl.textContent = formatYen(total);
+  grandTotalEl.textContent = total.toLocaleString();
 }
 
-/* フォーム操作 */
-addLineBtn.onclick = ()=> createLineRow();
+function attachEvents(){
+  document.querySelectorAll('input[type=number]').forEach(inp=>{
+    inp.addEventListener('input', calcTotals);
+  });
+}
 
-clearOrderBtn.onclick = ()=>{
-  entryTableBody.innerHTML = '';
-  orderNumberEl.value = genOrderNumber();
-  orderDateEl.value = nowISODate();
-  orderByEl.value = '';
-  totalAmtEl.textContent = formatYen(0);
-  entryMsg.textContent = '';
+// ====== 発注処理 ======
+btnSubmit.onclick = async ()=>{
+  const storeNumber = storeNumberEl.value.trim();
+  const name = nameEl.value.trim();
+  if(!storeNumber) return alert('店番を入力してください');
+  if(!name) return alert('店舗名を入力してください');
+
+  const ordersData = products.map((p,i)=>{
+    const qty = Number(document.querySelector(`input[data-index="${i}"]`).value)||0;
+    if(qty>0){
+      return {
+        productName:p.name, origin:p.origin, spec:p.spec,
+        pack:p.pack, price:p.price, quantity:qty,
+        subtotal:p.pack*p.price*qty
+      };
+    }
+    return null;
+  }).filter(x=>x);
+  if(ordersData.length===0) return alert('数量を入力してください');
+
+  try{
+    const res = await fetch(API_BASE,{
+      method:'POST',
+      body:JSON.stringify({action:'addOrder', storeNumber, name, orders:ordersData})
+    });
+    const j = await res.json();
+    if(j.success){
+      alert('発注を送信しました');
+      document.querySelectorAll('input[type=number]').forEach(i=>i.value=0);
+      calcTotals();
+      await loadOrders(); // 履歴更新
+    }else alert('送信に失敗しました');
+  }catch(e){ alert('通信エラー: '+e.message); }
 };
 
-submitOrderBtn.onclick = async ()=>{
-  entryMsg.textContent = '';
-  // validate
-  const rows = Array.from(entryTableBody.querySelectorAll('tr'));
-  if(rows.length === 0) { entryMsg.textContent = '明細が1行以上必要です'; return; }
-  const orderBy = orderByEl.value.trim();
-  if(!orderBy) { entryMsg.textContent = '発注者名を入力してください'; return; }
-  const orderDate = orderDateEl.value || nowISODate();
-  const orderNumber = orderNumberEl.value || genOrderNumber();
+// ====== 履歴表示処理 ======
+const ordersTbody = document.querySelector('#ordersTable tbody');
+const ordersCountEl = document.getElementById('ordersCount');
+const filterNumber = document.getElementById('filterNumber');
+const filterName = document.getElementById('filterName');
+const btnFilter = document.getElementById('btnFilter');
+const btnClear = document.getElementById('btnClear');
 
-  const lines = [];
-  for(const tr of rows){
-    const sel = tr.querySelector('.selProduct');
-    const pid = sel.value;
-    if(!pid){ entryMsg.textContent = '商品が未選択の行があります'; return; }
-    const product = productsForSelect.find(p=>String(p.id) === String(pid));
-    const qty = Number(tr.querySelector('.quantity').value) || 0;
-    if(qty <= 0){ entryMsg.textContent = '数量は1以上にしてください'; return; }
-    const price = Number(product.price) || 0;
-    lines.push({
-      productId: product.id,
-      productName: product.name,
-      origin: product.origin,
-      spec: product.spec || '',
-      pack: product.pack,
-      price: price,
-      quantity: qty,
-      subtotal: price * qty
-    });
-  }
-
-  const total = lines.reduce((s,l)=>s + (l.subtotal||0), 0);
-  const payload = {
-    number: orderNumber,
-    date: orderDate,
-    orderBy,
-    total,
-    lines
-  };
-
-  // submit
-  submitOrderBtn.disabled = true;
-  submitOrderBtn.textContent = '送信中...';
+async function loadOrders(){
   try{
-    const res = await apiSubmitOrder(payload);
-    if(res && res.success){
-      alert('発注を登録しました');
-      clearOrderBtn.click();
-    }else{
-      console.error(res);
-      entryMsg.textContent = '登録失敗: ' + (res?.error || 'サーバエラー');
-    }
+    const j = await apiGetOrders();
+    if(!j.success) throw new Error(j.error||'API error');
+    orders = j.orders;
+    renderOrders(orders);
   }catch(e){
     console.error(e);
-    entryMsg.textContent = '通信エラー: ' + (e.message || e);
-  }finally{
-    submitOrderBtn.disabled = false;
-    submitOrderBtn.textContent = '発注登録';
+    alert('注文履歴の取得に失敗しました: '+e.message);
+  }
+}
+
+function renderOrders(list){
+  ordersTbody.innerHTML='';
+  let totalAll = 0; // ← 全体合計
+  list.forEach(o=>{
+    const subtotal = Number(o.subtotal)||0;
+    totalAll += subtotal;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${escapeHtml(o.date)}</td><td>${escapeHtml(o.number)}</td><td>${escapeHtml(o.name)}</td>
+    <td>${escapeHtml(o.productName)}</td><td>${escapeHtml(o.origin)}</td><td>${escapeHtml(o.spec)}</td>
+    <td>${escapeHtml(o.pack)}</td><td>${escapeHtml(o.price)}</td><td>${escapeHtml(o.quantity)}</td><td>${escapeHtml(o.subtotal)}</td>`;
+    ordersTbody.appendChild(tr);
+  });
+  ordersCountEl.textContent=list.length;
+  document.getElementById('historyTotal').textContent = '合計金額：¥' + totalAll.toLocaleString(); // ← ここで更新
+}
+
+
+btnFilter.onclick=()=>{
+  const n=filterNumber.value.trim().toLowerCase();
+  const nm=filterName.value.trim().toLowerCase();
+  const filtered=orders.filter(o=>{
+    if(n && String(o.number||'').toLowerCase().indexOf(n)===-1) return false;
+    if(nm && String(o.name||'').toLowerCase().indexOf(nm)===-1) return false;
+    return true;
+  });
+  renderOrders(filtered);
+};
+btnClear.onclick=()=>{filterNumber.value='';filterName.value='';renderOrders(orders);};
+
+// 履歴ボタン切り替え
+btnHistory.onclick=async ()=>{
+  if(historySection.style.display==='none'){
+    historySection.style.display='block';
+    await loadOrders();
+  }else{
+    historySection.style.display='none';
   }
 };
 
-/* 初期化: 商品取得して1行追加、日付/番号セット */
-(async function initEntry(){
-  // set default date & number
-  orderDateEl.value = nowISODate();
-  orderNumberEl.value = genOrderNumber();
-
-  const j = await apiGetProductsForEntry();
-  if(j && j.success && Array.isArray(j.products)){
-    // products should contain id,name,origin,spec,pack,price
-    productsForSelect = j.products.map(p=>({
-      id: p.id,
-      name: p.name,
-      origin: p.origin,
-      spec: p.spec || '',
-      pack: p.pack || 1,
-      price: Number(p.price) || 0
-    }));
-  }else{
-    // API 失敗時は最低限空のダミーを用意
-    console.warn('商品取得失敗', j);
-    productsForSelect = [];
+// 初期ロード
+(async()=>{
+  try{
+    const j = await apiGetProducts();
+    if(!j.success) throw new Error(j.error||'API error');
+    products = j.products;
+    renderTable();
+    attachEvents();
+  }catch(e){
+    alert('商品データの読み込みに失敗しました: '+e.message);
   }
-  // add one blank line
-  createLineRow();
-  recalcTotal();
 })();
 </script>
+</body>
+</html>
