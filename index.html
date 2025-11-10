@@ -54,6 +54,10 @@
   <!-- 注文履歴 -->
   <div id="historySection" class="card">
     <h3>注文履歴</h3>
+    <div id="historyTotal" class="totalArea" style="text-align:left;margin-bottom:6px;">
+      合計：¥<span id="historyTotalAmount">0</span>
+    </div>
+
     <div class="filter">
       <input id="filterNumber" placeholder="店番で検索" style="width:160px">
       <input id="filterName" placeholder="店舗名検索" style="width:200px">
@@ -61,6 +65,8 @@
       <button id="btnClear" class="btn ghost">解除</button>
       <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
     </div>
+
+
     <div style="overflow:auto;max-height:420px">
       <table id="ordersTable">
         <thead>
@@ -206,7 +212,14 @@ function renderOrders(list){
     ordersTbody.appendChild(tr);
   });
   ordersCountEl.textContent=list.length;
+  
+  function updateHistoryTotal(list){
+  const total = list.reduce((sum, o) => sum + Number(o.subtotal || 0), 0);
+  document.getElementById('historyTotalAmount').textContent = total.toLocaleString();
+  }
 
+  updateHistoryTotal(list);
+  
   document.querySelectorAll('.btn-del').forEach(btn=>{
     btn.onclick=async ()=>{
       if(!confirm('削除してよろしいですか？')) return;
