@@ -20,19 +20,32 @@
   .infoRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   #historySection{display:none;}
   /* 履歴の合計をスクロール領域の上に固定する用 */
+  .totalArea {
+  position: sticky;
+  top: 0;
+  background: #d8d9f9;
+  z-index: 5;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef2f7;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+} 
+
+
   .historyHeader {
     position: sticky;
     top: 0;
-    background: #fff;
+    background: #d8d9f9;
     z-index: 5;
     padding: 8px 0;
     border-bottom: 1px solid #eef2f7;
     display: flex;
     gap: 12px;
     align-items: center;
-}
-.historyHeader .totalArea { margin: 0; font-weight:700; font-size:1.1rem; }
+  } 
 
+  .historyHeader .totalArea { margin: 0; font-weight:700; font-size:1.1rem; }
   .filter{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   .small{font-size:0.9rem;color:#666}
 
@@ -49,23 +62,77 @@
     padding: 4px;
     font-size: 1rem;
   }
+/* ====== スマホ（幅600px以下）ではカード表示に変更 ====== */
+@media (max-width: 600px) {
+
+  /* テーブルをブロック化して1商品=1カードに */
+  #orderTable {
+    display: block;
+    border-collapse: separate;
+  }
+
+  #orderTable thead {
+    display: none; /* 見出し非表示 */
+  }
+
+  #orderTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #orderTable tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    padding: 10px;
+  }
+
+  #orderTable td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    padding: 4px 0;
+    font-size: 0.9rem;
+  }
+
+  #orderTable td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #555;
+    margin-right: 8px;
+  }
+
+  #orderTable input[type=number] {
+    width: 70px;
+  }
+
+  /* カードの余白調整 */
+  .card {
+    padding: 10px;
+  }
+}
+
+
 
 </style>
 </head>
 <body>
+  <!-- 発注フォーム -->
 <div class="wrap">
   <div class="header">
     <h2>発注フォーム</h2>
     <button id="btnHistory" class="btn ghost" type="button">履歴</button>
   </div>
-  
-  <!-- 発注フォーム -->
   <div class="card">
-    <div class="infoRow">
+    <div class="infoRow"  style="height:30px">
       <input id="storeNumber" type="text" placeholder="店番" style="width: 80px">
-      <input id="name" type="text" placeholder="店舗名" style="width: 100px">
-      <div class="totalArea">合計：¥<span id="grandTotal">0</span></div>
+      <input id="name" type="text" placeholder="発注者名" style="width: 100px">
     </div>
+    <div class="totalArea">合計：¥<span id="grandTotal">0</span></div>
     
     <table id="orderTable" >
       <thead>
@@ -93,7 +160,7 @@
 
   <div class="filter" style="margin-bottom:8px;gap:8px;align-items:center">
     <input id="filterNumber" placeholder="店番で検索" style="width:160px">
-    <input id="filterName" placeholder="店舗名検索" style="width:200px">
+    <input id="filterName" placeholder="発注者名検索" style="width:200px">
     <button id="btnFilter" class="btn ghost">フィルタ</button>
     <button id="btnClear" class="btn ghost">解除</button>
     <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
@@ -111,9 +178,18 @@
     <table id="ordersTable">
       <thead>
         <tr>
-          <th>ID</th><th>日時</th><th>店番</th><th>店舗名</th>
-          <th>商品名</th><th>産地</th><th>規格</th><th>入り数</th>
-          <th>単価</th><th>数量</th><th>小計</th><th>操作</th>
+          <th>ID</th>
+          <th>日時</th>
+          <th>店番</th>
+          <th>店舗名</th>
+          <th>商品名</th>
+          <th>産地</th>
+          <th>規格</th>
+          <th>入り数</th>
+          <th>単価</th>
+          <th>数量</th>
+          <th>小計</th>
+          <th>操作</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -150,16 +226,17 @@ function renderTable(){
   products.forEach((p,i)=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${escapeHtml(p.origin)}</td>
-      <td>${escapeHtml(p.name)}</td>
-      <td>${escapeHtml(p.spec||'')}</td>
-      <td>${p.pack}</td>
-      <td>¥${Number(p.price).toLocaleString()}</td>
-      <td><input type="number" min="0" value="0" data-index="${i}"></td>
-      <td class="subtotal" id="sub${i}">¥0</td>`;
+      <td data-label="産地">${escapeHtml(p.origin)}</td>
+      <td data-label="商品名">${escapeHtml(p.name)}</td>
+      <td data-label="規格">${escapeHtml(p.spec||'')}</td>
+      <td data-label="入り数">${p.pack}</td>
+      <td data-label="単価">¥${Number(p.price).toLocaleString()}</td>
+      <td data-label="数量"><input type="number" min="0" value="0" data-index="${i}"></td>
+      <td data-label="小計" class="subtotal" id="sub${i}">¥0</td>`;
     tbody.appendChild(tr);
   });
 }
+
 
 function calcTotals(){
   let total = 0;
