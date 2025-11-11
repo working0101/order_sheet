@@ -62,62 +62,102 @@
     padding: 4px;
     font-size: 1rem;
   }
-/* ====== スマホ（幅600px以下）ではカード表示に変更 ====== */
-@media (max-width: 600px) {
 
-  /* テーブルをブロック化して1商品=1カードに */
+  /* ====== スマホ（幅600px以下）：カード3段構成で小型化 ====== */
+@media (max-width: 600px) {
   #orderTable {
     display: block;
-    border-collapse: separate;
   }
 
   #orderTable thead {
-    display: none; /* 見出し非表示 */
+    display: none;
   }
 
   #orderTable tbody {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
   #orderTable tr {
     display: flex;
     flex-direction: column;
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    padding: 8px 10px;
+    font-size: 0.85rem;
   }
 
   #orderTable td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     border: none;
-    padding: 4px 0;
-    font-size: 0.9rem;
+    padding: 2px 0;
   }
 
-  #orderTable td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #555;
-    margin-right: 8px;
-  }
+  /* --- 段構成 --- */
+  .card-row1 { font-weight: 600; color: #333; margin-bottom: 2px; }
+  .card-row2 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+  .card-row3 { display: flex; justify-content: space-between; align-items: center; }
 
+  /* 数量入力 */
   #orderTable input[type=number] {
-    width: 70px;
+    width: 60px;
+    font-size: 0.9rem;
+    padding: 3px;
+  }
+    
+  .subtotal {
+    font-weight: 700;
+    color: #222;
   }
 
-  /* カードの余白調整 */
-  .card {
-    padding: 10px;
-  }
 }
+/* ===== 履歴カード：スマホ時に発注カードと同じ3段構成に ===== */
+@media (max-width: 600px) {
+  #ordersTable {
+    display: block;
+  }
 
+  #ordersTable thead {
+    display: none;
+  }
 
+  #ordersTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
+  #ordersTable tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  #ordersTable td {
+    border: none;
+    padding: 2px 0;
+  }
+
+  /* 段構成 */
+  .hist-row1 { font-weight: 600; color: #333; margin-bottom: 2px; }
+  .hist-row2 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+  .hist-row3 { display: flex; justify-content: space-between; align-items: center; }
+
+  /* 小計 */
+  .subtotal {
+    font-weight: 700;
+    color: #222;
+  }
+
+  /* 小さいボタン */
+  .btn.small { padding: 4px 8px; font-size: 0.78rem; }
+}
+  
 </style>
 </head>
 <body>
@@ -223,19 +263,42 @@ async function apiGetOrders(){const res = await fetch(API_BASE+'?action=getOrder
 
 function renderTable(){
   tbody.innerHTML = '';
+  const isMobile = window.innerWidth <= 600; // スマホ判定
+
   products.forEach((p,i)=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td data-label="産地">${escapeHtml(p.origin)}</td>
-      <td data-label="商品名">${escapeHtml(p.name)}</td>
-      <td data-label="規格">${escapeHtml(p.spec||'')}</td>
-      <td data-label="入り数">${p.pack}</td>
-      <td data-label="単価">¥${Number(p.price).toLocaleString()}</td>
-      <td data-label="数量"><input type="number" min="0" value="0" data-index="${i}"></td>
-      <td data-label="小計" class="subtotal" id="sub${i}">¥0</td>`;
+
+    if(isMobile){
+      // ===== スマホ用カード3段構成 =====
+      tr.innerHTML = `
+        <td colspan="7">
+          <div class="card-row1">${escapeHtml(p.name)}（${escapeHtml(p.origin)}）</div>
+          <div class="card-row2">
+            <span>規格：${escapeHtml(p.spec || '')}</span>
+            <span>入り数：${p.pack}</span>
+            <span>単価：¥${Number(p.price).toLocaleString()}</span>
+          </div>
+          <div class="card-row3">
+            <label>数量：<input type="number" min="0" value="0" data-index="${i}"></label>
+            <span class="subtotal" id="sub${i}">¥0</span>
+          </div>
+        </td>`;
+    } else {
+      // ===== PC用テーブル構造 =====
+      tr.innerHTML = `
+        <td>${escapeHtml(p.origin)}</td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(p.spec||'')}</td>
+        <td>${p.pack}</td>
+        <td>¥${Number(p.price).toLocaleString()}</td>
+        <td><input type="number" min="0" value="0" data-index="${i}"></td>
+        <td class="subtotal" id="sub${i}">¥0</td>`;
+    }
+
     tbody.appendChild(tr);
   });
 }
+
 
 
 function calcTotals(){
@@ -346,44 +409,70 @@ function updateHistoryTotal(list){
 }
 
 
-function renderOrders(list){
+  function renderOrders(list){
   ordersTbody.innerHTML = '';
-  list.forEach((o) => {
+  const isMobile = window.innerWidth <= 600;
+
+  list.forEach((o, displayIndex) => {
     const tr = document.createElement('tr');
 
-    // 「元データでの行番号」を取得
+    // 元データの行番号（realIndex）を安全に取得
     const realIndex = orders.findIndex(or =>
       or.date === o.date &&
       or.number === o.number &&
       or.name === o.name &&
       or.productName === o.productName &&
-      or.quantity === o.quantity &&
-      or.price === o.price
+      String(or.quantity) === String(o.quantity) &&
+      String(or.price) === String(o.price)
     );
 
-    tr.innerHTML = `
-      <td>${realIndex + 1}</td>
-      <td>${escapeHtml(o.date || '')}</td>
-      <td>${escapeHtml(o.number || '')}</td>
-      <td>${escapeHtml(o.name || '')}</td>
-      <td>${escapeHtml(o.productName || '')}</td>
-      <td>${escapeHtml(o.origin || '')}</td>
-      <td>${escapeHtml(o.spec || '')}</td>
-      <td>${escapeHtml(o.pack || '')}</td>
-      <td>${escapeHtml(o.price || '')}</td>
-      <td>${escapeHtml(o.quantity || '')}</td>
-      <td>${escapeHtml(o.subtotal || '')}</td>
-      <td>
-        <button class="btn ghost small btn-edit" data-index="${realIndex}">修正</button>
-        <button class="btn ghost small btn-del" data-index="${realIndex}">削除</button>
+    if(isMobile){
+    // スマホ：発注カードと同じ3段構成
+      tr.innerHTML = `
+      <td colspan="12">
+        <div class="hist-row1">${escapeHtml(o.productName||'')}（${escapeHtml(o.origin||'')}）</div>
+        <div class="hist-row2">
+          <span>規格：${escapeHtml(o.spec||'')}</span>
+          <span>入り数：${escapeHtml(o.pack||'')}</span>
+          <span>単価：¥${Number(o.price).toLocaleString()}</span>
+        </div>
+        <div class="hist-row3">
+          <div>数量：${escapeHtml(o.quantity||'')}</div>
+            <div class="subtotal">¥${(Number(o.price||0) * Number(o.pack||1) * Number(o.quantity||0)).toLocaleString()}</div>
+            <div class="hist-actions">
+            <button class="btn ghost small btn-edit" data-index="${realIndex}">修正</button>
+            <button class="btn ghost small btn-del" data-index="${realIndex}">削除</button>
+          </div>
+        </div>
       </td>`;
+    }
+ else {
+      // PC：従来のテーブル行表示
+      tr.innerHTML = `
+        <td>${realIndex + 1}</td>
+        <td>${escapeHtml(o.date || '')}</td>
+        <td>${escapeHtml(o.number || '')}</td>
+        <td>${escapeHtml(o.name || '')}</td>
+        <td>${escapeHtml(o.productName || '')}</td>
+        <td>${escapeHtml(o.origin || '')}</td>
+        <td>${escapeHtml(o.spec || '')}</td>
+        <td>${escapeHtml(o.pack || '')}</td>
+        <td>${escapeHtml(o.price || '')}</td>
+        <td>${escapeHtml(o.quantity || '')}</td>
+        <td>${escapeHtml(o.subtotal || '')}</td>
+        <td>
+          <button class="btn ghost small btn-edit" data-index="${realIndex}">修正</button>
+          <button class="btn ghost small btn-del" data-index="${realIndex}">削除</button>
+        </td>`;
+    }
+
     ordersTbody.appendChild(tr);
   });
 
   ordersCountEl.textContent = list.length;
   updateHistoryTotal(list);
 
-  // ===== 削除ボタン =====
+  // --- イベントバインド（削除／修正） ---
   document.querySelectorAll('.btn-del').forEach(btn => {
     btn.onclick = async () => {
       const rowIndex = Number(btn.dataset.index);
@@ -408,7 +497,6 @@ function renderOrders(list){
     };
   });
 
-  // ===== 修正ボタン =====
   document.querySelectorAll('.btn-edit').forEach(btn => {
     btn.onclick = async () => {
       const rowIndex = Number(btn.dataset.index);
@@ -427,6 +515,9 @@ function renderOrders(list){
     };
   });
 }
+
+
+
 
 
 async function updateOrder(order, rowIndex){
@@ -474,6 +565,13 @@ btnHistory.onclick=async ()=>{
     attachEvents();
   }catch(e){alert('商品データの読み込みに失敗しました: '+e.message);}
 })();
+
+window.addEventListener('resize', ()=>{
+  renderTable();
+  attachEvents();
+});
+
+
 </script>
 </body>
 </html>
