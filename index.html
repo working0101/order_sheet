@@ -112,7 +112,7 @@
   }
 
 }
-/* ===== 履歴カード：スマホ時に発注カードと同じ3段構成に ===== */
+/* ===== 履歴カード：スマホ時に4段構成に ===== */
 @media (max-width: 600px) {
   #ordersTable {
     display: block;
@@ -144,9 +144,10 @@
   }
 
   /* 段構成 */
-  .hist-row1 { font-weight: 600; color: #333; margin-bottom: 2px; }
-  .hist-row2 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
-  .hist-row3 { display: flex; justify-content: space-between; align-items: center; }
+  .hist-row1 { font-weight: 600; color: #333; margin-bottom: 1px; }
+  .hist-row2 { font-weight: 600; color: #333; margin-bottom: 2px; }
+  .hist-row3 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+  .hist-row4 { display: flex; justify-content: space-between; align-items: center; }
 
   /* 小計 */
   .subtotal {
@@ -180,7 +181,7 @@
           <th>産地</th>
           <th>商品名</th>
           <th>規格</th>
-          <th>入り数</th>
+          <th>入数</th>
           <th>単価</th>
           <th>数量</th>
           <th>小計</th>
@@ -225,7 +226,7 @@
           <th>商品名</th>
           <th>産地</th>
           <th>規格</th>
-          <th>入り数</th>
+          <th>入数</th>
           <th>単価</th>
           <th>数量</th>
           <th>小計</th>
@@ -275,7 +276,7 @@ function renderTable(){
           <div class="card-row1">${escapeHtml(p.name)}（${escapeHtml(p.origin)}）</div>
           <div class="card-row2">
             <span>規格：${escapeHtml(p.spec || '')}</span>
-            <span>入り数：${p.pack}</span>
+            <span>入数：${p.pack}</span>
             <span>単価：¥${Number(p.price).toLocaleString()}</span>
           </div>
           <div class="card-row3">
@@ -430,13 +431,16 @@ function updateHistoryTotal(list){
     // スマホ：発注カードと同じ3段構成
       tr.innerHTML = `
       <td colspan="12">
-        <div class="hist-row1">${escapeHtml(o.productName||'')}（${escapeHtml(o.origin||'')}）</div>
+        <div class="hist-row1">
+          ${escapeHtml(o.number||'')}:${escapeHtml(o.name||'')}
         <div class="hist-row2">
+          ${escapeHtml(o.productName||'')}（${escapeHtml(o.origin||'')}）</div>
+        <div class="hist-row3">
           <span>規格：${escapeHtml(o.spec||'')}</span>
-          <span>入り数：${escapeHtml(o.pack||'')}</span>
+          <span>入数：${escapeHtml(o.pack||'')}</span>
           <span>単価：¥${Number(o.price).toLocaleString()}</span>
         </div>
-        <div class="hist-row3">
+        <div class="hist-row4">
           <div>数量：${escapeHtml(o.quantity||'')}</div>
             <div class="subtotal">¥${(Number(o.price||0) * Number(o.pack||1) * Number(o.quantity||0)).toLocaleString()}</div>
             <div class="hist-actions">
