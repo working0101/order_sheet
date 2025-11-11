@@ -22,15 +22,99 @@
   .filter{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   .small{font-size:0.9rem;color:#666}
 
-  @media(max-width:600px){
-  input[type=text], input[type=number]{
-    width:100% !important; /* スマホでは幅いっぱい */
+/* ===== スマホ時：カード型＋項目名ラベル表示 ===== */
+@media(max-width:600px){
+
+  /* テーブルをカード化 */
+  #orderTable {
+    display: block;
   }
-  .row{
-    flex-direction:column; /* 1列縦並び */
-    align-items:stretch;
+  #orderTable thead {
+    display: none; /* ヘッダー非表示（カード内に表示するため） */
+  }
+  #orderTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #orderTable tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  #orderTable td {
+    border-bottom: none;
+    padding: 4px 0;
+    display: flex;
+    justify-content:space-between;
+    width: 100%;
   }
 }
+  /* ===== 各項目にラベル（疑似要素）を追加 ===== */
+  #orderTable td:nth-child(1)::before { content: "産地　　  　"; font-weight: 450; } 
+  #orderTable td:nth-child(2)::before { content: "商品名　　　　　"; font-weight: 450; }
+  #orderTable td:nth-child(3)::before { content: "規格"; font-weight: 450; } 
+  
+
+  /* 2段まとめ枠 */
+  .mobile-row2 {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .mobile-row2 div {
+    background: #f7f7f7;
+    padding: 6px;
+    border-radius: 6px;
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+
+  /* 数量入力をカード用に調整 */
+  #orderTable td input[type=number] {
+    width: 50px;
+    text-align: center;
+    padding: 4px;
+  }
+
+  /* 2段目ラベル */
+  #orderTable td:nth-child(4)::before { content: "入数"; font-weight: 450; }
+  #orderTable td:nth-child(5)::before { content: "単価"; font-weight: 450; }
+  #orderTable td:nth-child(6)::before { content: "数量"; font-weight: 450; }
+  #orderTable td:nth-child(7)::before { content: "小計"; font-weight: 450; }
+
+
+  /* 数量だけを強調（背景・太字） */
+  #orderTable td:nth-child(6) {
+    background: #fff3c4;
+    font-weight: 700;
+  }
+
+/* 小計を右寄せにして見やすく */
+  #orderTable td:nth-child(7) {
+
+  /* 小計を右寄せにして見やすく */
+  #orderTable td:nth-child(7) {
+    width: 100px;
+    font-weight: 700;
+    color: #000;
+  }
+
+/* 数量入力のサイズ調整 */
+  #orderTable td input[type="number"] {
+    width: 30px;
+    text-align: center;
+    padding: 4px;
+    font-size: 1rem;
+  }
+
+
 
 </style>
 </head>
@@ -50,7 +134,7 @@
 
     <table id="orderTable">
       <thead>
-        <tr><th>産地</th><th>商品名</th><th>規格</th><th>入り数</th><th>単価</th><th>数量</th><th>小計</th></tr>
+        <tr><th>産地</th><th>商品名</th><th>規格</th><th>入数</th><th>単価</th><th>数量</th><th>小計</th></tr>
       </thead>
       <tbody></tbody>
     </table>
