@@ -19,6 +19,20 @@
   .totalArea{margin-top:16px;text-align:right;font-weight:600;font-size:1.5rem}
   .infoRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   #historySection{display:none;}
+  /* 履歴の合計をスクロール領域の上に固定する用 */
+  .historyHeader {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 5;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.historyHeader .totalArea { margin: 0; font-weight:700; font-size:1.1rem; }
+
   .filter{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   .small{font-size:0.9rem;color:#666}
 
@@ -72,34 +86,41 @@
       <button id="btnSubmit" class="btn">発注する</button>
     </div>
   </div>
+  
+<!-- 注文履歴 -->
+<div id="historySection" class="card">
+  <h3 style="margin-top:0">注文履歴</h3>
 
-  <!-- 注文履歴 -->
-  <div id="historySection" class="card">
-    <h3>注文履歴</h3>
-    <div class="filter">
-    <div id="historyTotal" class="totalArea" style="text-align:right;margin-bottom:6px;">
-      合計：¥<span id="historyTotalAmount">0</span>
+  <div class="filter" style="margin-bottom:8px;gap:8px;align-items:center">
+    <input id="filterNumber" placeholder="店番で検索" style="width:160px">
+    <input id="filterName" placeholder="店舗名検索" style="width:200px">
+    <button id="btnFilter" class="btn ghost">フィルタ</button>
+    <button id="btnClear" class="btn ghost">解除</button>
+    <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
+  </div>
+
+  <div style="overflow:auto;max-height:420px">
+    <!-- スクロール領域内の先頭に合計を置く（stickyで固定表示させる） -->
+    <div class="historyHeader">
+      <div id="historyTotal" class="totalArea">
+        合計：¥<span id="historyTotalAmount">0</span>
+      </div>
+      <div class="small" style="margin-left:8px;color:#666">（表示中の合計）</div>
     </div>
-      <input id="filterNumber" placeholder="店番で検索" style="width:160px">
-      <input id="filterName" placeholder="店舗名検索" style="width:200px">
-      <button id="btnFilter" class="btn ghost">フィルタ</button>
-      <button id="btnClear" class="btn ghost">解除</button>
-      <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
-    </div>
-    <div style="overflow:auto;max-height:420px">
-      <table id="ordersTable">
-        <thead>
-          <tr>
-            <th>ID</th><th>日時</th><th>店番</th><th>店舗名</th>
-            <th>商品名</th><th>産地</th><th>規格</th><th>入り数</th>
-            <th>単価</th><th>数量</th><th>小計</th><th>操作</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+
+    <table id="ordersTable">
+      <thead>
+        <tr>
+          <th>ID</th><th>日時</th><th>店番</th><th>店舗名</th>
+          <th>商品名</th><th>産地</th><th>規格</th><th>入り数</th>
+          <th>単価</th><th>数量</th><th>小計</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 </div>
+
 
 <script>
 const API_BASE = 'https://script.google.com/macros/s/AKfycbzsxoLhzuBrPbVdL5PA4Q6AWbfFbKXBvSK0aWwWNcwsunzn9c9wlCJ-aLYbVn5T7Wg/exec';
@@ -208,58 +229,128 @@ async function loadOrders(){
   }catch(e){alert('注文履歴の取得に失敗しました: '+e.message);}
 }
 
+function updateHistoryTotal(list){
+  // list の各要素から数値を取り出して合計を計算する
+  let total = 0;
+  list.forEach(o=>{
+    // subtotal があればそれを使う。無ければ price*pack*quantity を計算
+    let st = 0;
+    if(o.subtotal != null && o.subtotal !== ''){
+      // 数字以外の文字を除去して数値化（"¥1,000" のような場合にも対応）
+      const num = String(o.subtotal).replace(/[^\d.-]+/g, '');
+      st = Number(num) || 0;
+    } else {
+      const price = Number(o.price) || 0;
+      const pack = Number(o.pack) || 1;
+      const qty = Number(o.quantity) || 0;
+      st = price * pack * qty;
+    }
+    total += st;
+  });
+  document.getElementById('historyTotalAmount').textContent = total.toLocaleString();
+}
+
+function updateHistoryTotal(list){
+  let total = 0;
+  list.forEach(o=>{
+    let st = 0;
+    if(o.subtotal != null && o.subtotal !== ''){
+      const num = String(o.subtotal).replace(/[^\d.-]+/g, '');
+      st = Number(num) || 0;
+    } else {
+      const price = Number(o.price) || 0;
+      const pack = Number(o.pack) || 1;
+      const qty = Number(o.quantity) || 0;
+      st = price * pack * qty;
+    }
+    total += st;
+  });
+  document.getElementById('historyTotalAmount').textContent = total.toLocaleString();
+}
+
+
 function renderOrders(list){
-  ordersTbody.innerHTML='';
-  list.forEach((o, index)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${index + 1}</td>
-      <td>${escapeHtml(o.date||'')}</td>
-      <td>${escapeHtml(o.number||'')}</td>
-      <td>${escapeHtml(o.name||'')}</td>
-      <td>${escapeHtml(o.productName||'')}</td>
-      <td>${escapeHtml(o.origin||'')}</td>
-      <td>${escapeHtml(o.spec||'')}</td>
-      <td>${escapeHtml(o.pack||'')}</td>
-      <td>${escapeHtml(o.price||'')}</td>
-      <td>${escapeHtml(o.quantity||'')}</td>
-      <td>${escapeHtml(o.subtotal||'')}</td>
+  ordersTbody.innerHTML = '';
+  list.forEach((o) => {
+    const tr = document.createElement('tr');
+
+    // 「元データでの行番号」を取得
+    const realIndex = orders.findIndex(or =>
+      or.date === o.date &&
+      or.number === o.number &&
+      or.name === o.name &&
+      or.productName === o.productName &&
+      or.quantity === o.quantity &&
+      or.price === o.price
+    );
+
+    tr.innerHTML = `
+      <td>${realIndex + 1}</td>
+      <td>${escapeHtml(o.date || '')}</td>
+      <td>${escapeHtml(o.number || '')}</td>
+      <td>${escapeHtml(o.name || '')}</td>
+      <td>${escapeHtml(o.productName || '')}</td>
+      <td>${escapeHtml(o.origin || '')}</td>
+      <td>${escapeHtml(o.spec || '')}</td>
+      <td>${escapeHtml(o.pack || '')}</td>
+      <td>${escapeHtml(o.price || '')}</td>
+      <td>${escapeHtml(o.quantity || '')}</td>
+      <td>${escapeHtml(o.subtotal || '')}</td>
       <td>
-        <button class="btn ghost small btn-edit" data-index="${index}">修正</button>
-        <button class="btn ghost small btn-del" data-index="${index}">削除</button>
+        <button class="btn ghost small btn-edit" data-index="${realIndex}">修正</button>
+        <button class="btn ghost small btn-del" data-index="${realIndex}">削除</button>
       </td>`;
     ordersTbody.appendChild(tr);
   });
-  ordersCountEl.textContent=list.length;
 
-  document.querySelectorAll('.btn-del').forEach(btn=>{
-    btn.onclick=async ()=>{
-      if(!confirm('削除してよろしいですか？')) return;
+  ordersCountEl.textContent = list.length;
+  updateHistoryTotal(list);
+
+  // ===== 削除ボタン =====
+  document.querySelectorAll('.btn-del').forEach(btn => {
+    btn.onclick = async () => {
       const rowIndex = Number(btn.dataset.index);
-      try{
-        const res=await fetch(API_BASE,{
-          method:'POST',
-          body:JSON.stringify({action:'deleteOrder', rowIndex})
+      if(isNaN(rowIndex)) return alert('削除対象を特定できません');
+      if(!confirm('削除してよろしいですか？')) return;
+
+      try {
+        const res = await fetch(API_BASE, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'deleteOrder', rowIndex })
         });
-        const j=await res.json();
-        if(j.success){alert('削除しました');await loadOrders();}
-        else alert('削除に失敗しました');
-      }catch(e){alert('通信エラー:'+e.message);}
+        const j = await res.json();
+        if (j.success) {
+          alert('削除しました');
+          await loadOrders();
+        } else {
+          alert('削除に失敗しました');
+        }
+      } catch (e) {
+        alert('通信エラー:' + e.message);
+      }
     };
   });
 
-  document.querySelectorAll('.btn-edit').forEach(btn=>{
-    btn.onclick=()=>{
+  // ===== 修正ボタン =====
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.onclick = async () => {
       const rowIndex = Number(btn.dataset.index);
+      if(isNaN(rowIndex)) return alert('修正対象を特定できません');
       const order = orders[rowIndex];
-      if(!order) return;
+      if (!order) return alert('データを取得できません');
       const newQty = prompt('新しい数量を入力', order.quantity);
-      if(newQty===null) return;
-      const updated = {...order, quantity:Number(newQty), subtotal:order.price*order.pack*Number(newQty)};
-      updateOrder(updated, rowIndex);
+      if (newQty === null) return;
+
+      const updated = {
+        ...order,
+        quantity: Number(newQty),
+        subtotal: order.price * order.pack * Number(newQty)
+      };
+      await updateOrder(updated, rowIndex);
     };
   });
 }
+
 
 async function updateOrder(order, rowIndex){
   try{
