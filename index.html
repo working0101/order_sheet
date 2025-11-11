@@ -21,6 +21,17 @@
   #historySection{display:none;}
   .filter{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   .small{font-size:0.9rem;color:#666}
+
+  @media(max-width:600px){
+  input[type=text], input[type=number]{
+    width:100% !important; /* スマホでは幅いっぱい */
+  }
+  .row{
+    flex-direction:column; /* 1列縦並び */
+    align-items:stretch;
+  }
+}
+
 </style>
 </head>
 <body>
