@@ -280,10 +280,7 @@ function renderTable(){
             <span>単価：¥${Number(p.price).toLocaleString()}</span>
           </div>
           <div class="card-row3">
-            <div class="qtyWrap">
-              <span>数量：</span>
-              <input type="number" min="0" value="0" data-index="${i}">
-            </div>
+            <span>数量：<input type="number" min="0" value="0" data-index="${i}"></span>
             <span class="subtotal" id="sub${i}">¥0</span>
           </div>
         </td>`;
