@@ -158,7 +158,13 @@
   /* 小さいボタン */
   .btn.small { padding: 4px 8px; font-size: 0.78rem; }
 }
-  
+/* 発注フォーム側の合計バーは sticky を解除 */
+.wrap > .card > .totalArea {
+  position: static !important;
+}
+ 
+ 
+
 </style>
 </head>
 <body>
@@ -280,7 +286,7 @@ function renderTable(){
             <span>単価：¥${Number(p.price).toLocaleString()}</span>
           </div>
           <div class="card-row3">
-            <span>数量：<input type="number" min="0" value="0" data-index="${i}"></span>
+            数量：<input type="number" min="0" value="0" data-index="${i}">
             <span class="subtotal" id="sub${i}">¥0</span>
           </div>
         </td>`;
