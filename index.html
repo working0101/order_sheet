@@ -17,21 +17,24 @@
   .btn.small{padding:4px 8px;font-size:0.8rem}
   .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
   .totalArea{margin-top:16px;text-align:right;font-weight:600;font-size:1.5rem}
-  .infoRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-  #historySection{display:none;}
-  /* 履歴の合計をスクロール領域の上に固定する用 */
-  .totalArea {
-  position: sticky;
-  top: 0;
-  background: #d8d9f9;
-  z-index: 5;
-  padding: 8px 0;
-  border-bottom: 1px solid #eef2f7;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-} 
 
+  /* ====== フォーム側の合計バーは sticky 解除 ====== */
+  .wrap > .card > .totalArea {
+    position: static !important;
+  }
+
+  /* 履歴の合計をスクロール領域の上に固定する用 */
+  #historySection .totalArea {
+    position: sticky;
+    top: 0;
+    background: #d8d9f9;
+    z-index: 5;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  } 
 
   .historyHeader {
     position: sticky;
@@ -49,21 +52,21 @@
   .filter{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   .small{font-size:0.9rem;color:#666}
 
-  /* 数量だけを強調（背景・太字） */
+  /* 数量だけを強調 */
   #orderTable td:nth-child(6) {
     background: #fff3c4;
     font-weight: 700;
-    
   }
-/* 数量入力のサイズ調整 */
+
+  /* 数量入力 */
   #orderTable td input[type="number"] {
     width: 60px;
-    text-align:justify ;
+    text-align:right ;
     padding: 4px;
     font-size: 1rem;
   }
 
-  /* ====== スマホ（幅600px以下）：カード3段構成で小型化 ====== */
+  /* ====== スマホ（600px以下）：カード3段構成 ====== */
 @media (max-width: 600px) {
   #orderTable {
     display: block;
@@ -94,15 +97,24 @@
     padding: 2px 0;
   }
 
-  /* --- 段構成 --- */
+  /* 段構成 */
   .card-row1 { font-weight: 600; color: #333; margin-bottom: 2px; }
   .card-row2 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
-  .card-row3 { display: flex; justify-content: space-between; align-items: center; }
 
-  /* 数量入力 */
+  /* スマホ時は高さ揺れを防止 → フォーカス解除バグ対策 */
+  .card-row3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 42px;     /* ← これがフォーカス解除を防止する */
+  }
+
+  /* 数量入力の安定化 */
   #orderTable input[type=number] {
-    width: 60px;
-    font-size: 0.9rem;
+    width: 70px;
+    height: 34px;         /* ← 高さ固定でフォーカス安定 */
+    line-height: 34px;
+    font-size: 1rem;
     padding: 3px;
   }
     
@@ -112,7 +124,8 @@
   }
 
 }
-/* ===== 履歴カード：スマホ時に4段構成に ===== */
+  
+/* ===== 履歴カード：スマホ時に4段構成 ===== */
 @media (max-width: 600px) {
   #ordersTable {
     display: block;
@@ -143,45 +156,38 @@
     padding: 2px 0;
   }
 
-  /* 段構成 */
   .hist-row1 { font-weight: 600; color: #333; margin-bottom: 1px; }
   .hist-row2 { font-weight: 600; color: #333; margin-bottom: 2px; }
   .hist-row3 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
   .hist-row4 { display: flex; justify-content: space-between; align-items: center; }
 
-  /* 小計 */
   .subtotal {
     font-weight: 700;
     color: #222;
   }
 
-  /* 小さいボタン */
   .btn.small { padding: 4px 8px; font-size: 0.78rem; }
 }
-/* 発注フォーム側の合計バーは sticky を解除 */
-.wrap > .card > .totalArea {
-  position: static !important;
-}
- 
- 
 
 </style>
 </head>
 <body>
-  <!-- 発注フォーム -->
+
 <div class="wrap">
   <div class="header">
     <h2>発注フォーム</h2>
     <button id="btnHistory" class="btn ghost" type="button">履歴</button>
   </div>
+
   <div class="card">
     <div class="infoRow"  style="height:30px">
       <input id="storeNumber" type="text" placeholder="店番" style="width: 80px">
       <input id="name" type="text" placeholder="発注者名" style="width: 100px">
     </div>
+
     <div class="totalArea">合計：¥<span id="grandTotal">0</span></div>
     
-    <table id="orderTable" >
+    <table id="orderTable">
       <thead>
         <tr>
           <th>産地</th>
@@ -200,58 +206,53 @@
       <button id="btnSubmit" class="btn">発注する</button>
     </div>
   </div>
-  
-<!-- 注文履歴 -->
-<div id="historySection" class="card">
-  <h3 style="margin-top:0">注文履歴</h3>
 
-  <div class="filter" style="margin-bottom:8px;gap:8px;align-items:center">
-    <input id="filterNumber" placeholder="店番で検索" style="width:160px">
-    <input id="filterName" placeholder="発注者名検索" style="width:200px">
-    <button id="btnFilter" class="btn ghost">フィルタ</button>
-    <button id="btnClear" class="btn ghost">解除</button>
-    <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
-  </div>
+  <!-- 注文履歴 -->
+  <div id="historySection" class="card" style="display:none;">
+    <h3 style="margin-top:0">注文履歴</h3>
 
-  <div style="overflow:auto;max-height:420px">
-    <!-- スクロール領域内の先頭に合計を置く（stickyで固定表示させる） -->
-    <div class="historyHeader">
-      <div id="historyTotal" class="totalArea">
-        合計：¥<span id="historyTotalAmount">0</span>
-      </div>
-      <div class="small" style="margin-left:8px;color:#666">（表示中の合計）</div>
+    <div class="filter">
+      <input id="filterNumber" placeholder="店番で検索" style="width:160px">
+      <input id="filterName" placeholder="発注者名検索" style="width:200px">
+      <button id="btnFilter" class="btn ghost">フィルタ</button>
+      <button id="btnClear" class="btn ghost">解除</button>
+      <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
     </div>
 
-    <table id="ordersTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>日時</th>
-          <th>店番</th>
-          <th>店舗名</th>
-          <th>商品名</th>
-          <th>産地</th>
-          <th>規格</th>
-          <th>入数</th>
-          <th>単価</th>
-          <th>数量</th>
-          <th>小計</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
+    <div style="overflow:auto;max-height:420px">
+      <div class="historyHeader">
+        <div id="historyTotal" class="totalArea">
+          合計：¥<span id="historyTotalAmount">0</span>
+        </div>
+        <div class="small" style="margin-left:8px;color:#666">（表示中の合計）</div>
+      </div>
 
+      <table id="ordersTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>日時</th>
+            <th>店番</th>
+            <th>店舗名</th>
+            <th>商品名</th>
+            <th>産地</th>
+            <th>規格</th>
+            <th>入数</th>
+            <th>単価</th>
+            <th>数量</th>
+            <th>小計</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
 
 <script>
 const API_BASE = 'https://script.google.com/macros/s/AKfycbzsxoLhzuBrPbVdL5PA4Q6AWbfFbKXBvSK0aWwWNcwsunzn9c9wlCJ-aLYbVn5T7Wg/exec';
-
-//const API_BASE = 'https://script.google.com/macros/s/AKfycbwuDAfFHgf9wM90HCrpewcUK0tLUo7MpDnOrJC5Gn2gOkrpXP0GI1w2AE_uop49UzAV/exec';
-
-
-//https://script.google.com/macros/s/AKfycbxOotTqGBxFi_uPSVfUZl5MI_A02NFxC7dULTN9vu6yJtxytfxKGSrGKGl1nxFG8CY_/exec
 
 const tbody = document.querySelector('#orderTable tbody');
 const grandTotalEl = document.getElementById('grandTotal');
@@ -270,13 +271,12 @@ async function apiGetOrders(){const res = await fetch(API_BASE+'?action=getOrder
 
 function renderTable(){
   tbody.innerHTML = '';
-  const isMobile = window.innerWidth <= 600; // スマホ判定
+  const isMobile = window.innerWidth <= 600;
 
   products.forEach((p,i)=>{
     const tr = document.createElement('tr');
 
     if(isMobile){
-      // ===== スマホ用カード3段構成 =====
       tr.innerHTML = `
         <td colspan="7">
           <div class="card-row1">${escapeHtml(p.name)}（${escapeHtml(p.origin)}）</div>
@@ -291,7 +291,6 @@ function renderTable(){
           </div>
         </td>`;
     } else {
-      // ===== PC用テーブル構造 =====
       tr.innerHTML = `
         <td>${escapeHtml(p.origin)}</td>
         <td>${escapeHtml(p.name)}</td>
@@ -305,8 +304,6 @@ function renderTable(){
     tbody.appendChild(tr);
   });
 }
-
-
 
 function calcTotals(){
   let total = 0;
@@ -325,12 +322,12 @@ function attachEvents(){
   });
 }
 
-// ====== 発注処理 ======
 btnSubmit.onclick = async ()=>{
   const storeNumber = storeNumberEl.value.trim();
   const name = nameEl.value.trim();
   if(!storeNumber) return alert('店番を入力してください');
   if(!name) return alert('店舗名を入力してください');
+
   const ordersData = products.map((p,i)=>{
     const qty = Number(document.querySelector(`input[data-index="${i}"]`).value)||0;
     if(qty>0){
@@ -343,7 +340,9 @@ btnSubmit.onclick = async ()=>{
     }
     return null;
   }).filter(x=>x);
+
   if(ordersData.length===0) return alert('数量を入力してください');
+
   try{
     const res = await fetch(API_BASE,{
       method:'POST',
@@ -359,7 +358,6 @@ btnSubmit.onclick = async ()=>{
   }catch(e){ alert('通信エラー: '+e.message); }
 };
 
-// ====== 履歴表示 ======
 const ordersTbody = document.querySelector('#ordersTable tbody');
 const ordersCountEl = document.getElementById('ordersCount');
 const filterNumber = document.getElementById('filterNumber');
@@ -377,27 +375,6 @@ async function loadOrders(){
 }
 
 function updateHistoryTotal(list){
-  // list の各要素から数値を取り出して合計を計算する
-  let total = 0;
-  list.forEach(o=>{
-    // subtotal があればそれを使う。無ければ price*pack*quantity を計算
-    let st = 0;
-    if(o.subtotal != null && o.subtotal !== ''){
-      // 数字以外の文字を除去して数値化（"¥1,000" のような場合にも対応）
-      const num = String(o.subtotal).replace(/[^\d.-]+/g, '');
-      st = Number(num) || 0;
-    } else {
-      const price = Number(o.price) || 0;
-      const pack = Number(o.pack) || 1;
-      const qty = Number(o.quantity) || 0;
-      st = price * pack * qty;
-    }
-    total += st;
-  });
-  document.getElementById('historyTotalAmount').textContent = total.toLocaleString();
-}
-
-function updateHistoryTotal(list){
   let total = 0;
   list.forEach(o=>{
     let st = 0;
@@ -415,15 +392,13 @@ function updateHistoryTotal(list){
   document.getElementById('historyTotalAmount').textContent = total.toLocaleString();
 }
 
-
-  function renderOrders(list){
+function renderOrders(list){
   ordersTbody.innerHTML = '';
   const isMobile = window.innerWidth <= 600;
 
   list.forEach((o, displayIndex) => {
     const tr = document.createElement('tr');
 
-    // 元データの行番号（realIndex）を安全に取得
     const realIndex = orders.findIndex(or =>
       or.date === o.date &&
       or.number === o.number &&
@@ -434,13 +409,10 @@ function updateHistoryTotal(list){
     );
 
     if(isMobile){
-    // スマホ：発注カードと同じ3段構成
       tr.innerHTML = `
       <td colspan="12">
-        <div class="hist-row1">
-          ${escapeHtml(o.number||'')}:${escapeHtml(o.name||'')}
-        <div class="hist-row2">
-          ${escapeHtml(o.productName||'')}（${escapeHtml(o.origin||'')}）</div>
+        <div class="hist-row1">${escapeHtml(o.number||'')}:${escapeHtml(o.name||'')}</div>
+        <div class="hist-row2">${escapeHtml(o.productName||'')}（${escapeHtml(o.origin||'')}）</div>
         <div class="hist-row3">
           <span>規格：${escapeHtml(o.spec||'')}</span>
           <span>入数：${escapeHtml(o.pack||'')}</span>
@@ -448,16 +420,14 @@ function updateHistoryTotal(list){
         </div>
         <div class="hist-row4">
           <div>数量：${escapeHtml(o.quantity||'')}</div>
-            <div class="subtotal">¥${(Number(o.price||0) * Number(o.pack||1) * Number(o.quantity||0)).toLocaleString()}</div>
-            <div class="hist-actions">
+          <div class="subtotal">¥${(Number(o.price||0) * Number(o.pack||1) * Number(o.quantity||0)).toLocaleString()}</div>
+          <div class="hist-actions">
             <button class="btn ghost small btn-edit" data-index="${realIndex}">修正</button>
             <button class="btn ghost small btn-del" data-index="${realIndex}">削除</button>
           </div>
         </div>
       </td>`;
-    }
- else {
-      // PC：従来のテーブル行表示
+    } else {
       tr.innerHTML = `
         <td>${realIndex + 1}</td>
         <td>${escapeHtml(o.date || '')}</td>
@@ -482,7 +452,6 @@ function updateHistoryTotal(list){
   ordersCountEl.textContent = list.length;
   updateHistoryTotal(list);
 
-  // --- イベントバインド（削除／修正） ---
   document.querySelectorAll('.btn-del').forEach(btn => {
     btn.onclick = async () => {
       const rowIndex = Number(btn.dataset.index);
@@ -511,8 +480,10 @@ function updateHistoryTotal(list){
     btn.onclick = async () => {
       const rowIndex = Number(btn.dataset.index);
       if(isNaN(rowIndex)) return alert('修正対象を特定できません');
+
       const order = orders[rowIndex];
       if (!order) return alert('データを取得できません');
+
       const newQty = prompt('新しい数量を入力', order.quantity);
       if (newQty === null) return;
 
@@ -525,10 +496,6 @@ function updateHistoryTotal(list){
     };
   });
 }
-
-
-
-
 
 async function updateOrder(order, rowIndex){
   try{
@@ -544,7 +511,6 @@ async function updateOrder(order, rowIndex){
   }catch(e){alert('通信エラー:'+e.message);}
 }
 
-
 btnFilter.onclick=()=>{
   const n=filterNumber.value.trim().toLowerCase();
   const nm=filterName.value.trim().toLowerCase();
@@ -555,7 +521,12 @@ btnFilter.onclick=()=>{
   });
   renderOrders(filtered);
 };
-btnClear.onclick=()=>{filterNumber.value='';filterName.value='';renderOrders(orders);};
+
+btnClear.onclick=()=>{
+  filterNumber.value='';
+  filterName.value='';
+  renderOrders(orders);
+};
 
 btnHistory.onclick=async ()=>{
   if(historySection.style.display==='none'){
@@ -580,8 +551,7 @@ window.addEventListener('resize', ()=>{
   renderTable();
   attachEvents();
 });
-
-
 </script>
+
 </body>
 </html>
