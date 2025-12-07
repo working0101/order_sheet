@@ -5,45 +5,202 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>発注フォーム</title>
 <style>
-  body{font-family:system-ui,Segoe UI,Meiryo;padding:16px;background:#f6f8fb;color:#111}
+  body{font-family:system-ui,Segoe UI,Meiryo;padding:16px;background:#87fa6a;color:#111}
   .wrap{max-width:1100px;margin:0 auto}
   .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(20,30,60,0.04);margin-bottom:20px}
   table{width:100%;border-collapse:collapse;margin-top:10px}
   th,td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left}
   input[type=number], input[type=text]{padding:6px;border:1px solid #e6eefc;border-radius:6px}
   input[type=number]{width:80px}
-  .btn{background:#1976d2;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
-  .btn.ghost{background:#15ed76;color:#111;border:1px solid #e6eefc}
+  .btn{background:#1976d2;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:0.85rem}
+  .btn.ghost{background:#f8f80cf7;color:#111;border:1px solid #d0d6e0}
+  .btn.small{padding:4px 8px;font-size:0.8rem}
   .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .totalArea{margin-top:16px;text-align:right;font-weight:600;font-size:1.1rem}
-  .infoRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-  #historySection{display:none;}
+  .totalArea{margin-top:16px;text-align:right;font-weight:600;font-size:1.5rem}
+
+  /* ====== フォーム側の合計バーは sticky 解除 ====== */
+  .wrap > .card > .totalArea {
+    position: static !important;
+  }
+
+  /* 履歴の合計をスクロール領域の上に固定する用 */
+  #historySection .totalArea {
+    position: sticky;
+    top: 0;
+    background: #d8d9f9;
+    z-index: 5;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  } 
+
+  .historyHeader {
+    position: sticky;
+    top: 0;
+    background: #d8d9f9;
+    z-index: 5;
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  } 
+
+  .historyHeader .totalArea { margin: 0; font-weight:700; font-size:1.1rem; }
   .filter{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   .small{font-size:0.9rem;color:#666}
+
+  /* 数量だけを強調 */
+  #orderTable td:nth-child(6) {
+    background: #fff3c4;
+    font-weight: 700;
+  }
+
+  /* 数量入力 */
+  #orderTable td input[type="number"] {
+    width: 60px;
+    text-align:right ;
+    padding: 4px;
+    font-size: 1rem;
+  }
+
+  /* ====== スマホ（600px以下）：カード3段構成 ====== */
+@media (max-width: 600px) {
+  #orderTable {
+    display: block;
+  }
+
+  #orderTable thead {
+    display: none;
+  }
+
+  #orderTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #orderTable tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  #orderTable td {
+    border: none;
+    padding: 2px 0;
+  }
+
+  /* 段構成 */
+  .card-row1 { font-weight: 600; color: #333; margin-bottom: 2px; }
+  .card-row2 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+
+  /* スマホ時は高さ揺れを防止 → フォーカス解除バグ対策 */
+  .card-row3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 42px;     /* ← これがフォーカス解除を防止する */
+  }
+
+  /* 数量入力の安定化 */
+  #orderTable input[type=number] {
+    width: 70px;
+    height: 34px;         /* ← 高さ固定でフォーカス安定 */
+    line-height: 34px;
+    font-size: 1rem;
+    padding: 3px;
+  }
+    
+  .subtotal {
+    font-weight: 700;
+    color: #222;
+  }
+
+}
+  
+/* ===== 履歴カード：スマホ時に4段構成 ===== */
+@media (max-width: 600px) {
+  #ordersTable {
+    display: block;
+  }
+
+  #ordersTable thead {
+    display: none;
+  }
+
+  #ordersTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #ordersTable tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  #ordersTable td {
+    border: none;
+    padding: 2px 0;
+  }
+
+  .hist-row1 { font-weight: 600; color: #333; margin-bottom: 1px; }
+  .hist-row2 { font-weight: 600; color: #333; margin-bottom: 2px; }
+  .hist-row3 { color: #555; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+  .hist-row4 { display: flex; justify-content: space-between; align-items: center; }
+
+  .subtotal {
+    font-weight: 700;
+    color: #222;
+  }
+
+  .btn.small { padding: 4px 8px; font-size: 0.78rem; }
+}
+
 </style>
 </head>
 <body>
+
 <div class="wrap">
   <div class="header">
     <h2>発注フォーム</h2>
     <button id="btnHistory" class="btn ghost" type="button">履歴</button>
   </div>
 
-  <!-- 発注フォーム -->
   <div class="card">
-    <div class="infoRow">
-      <input id="storeNumber" type="text" placeholder="店番" style="width:120px">
-      <input id="name" type="text" placeholder="店舗名" style="width:200px">
+    <div class="infoRow"  style="height:30px">
+      <input id="storeNumber" type="text" placeholder="店番" style="width: 80px">
+      <input id="name" type="text" placeholder="発注者名" style="width: 100px">
     </div>
 
+    <div class="totalArea">合計：¥<span id="grandTotal">0</span></div>
+    
     <table id="orderTable">
       <thead>
-        <tr><th>産地</th><th>商品名</th><th>規格</th><th>入り数</th><th>単価</th><th>数量</th><th>小計</th></tr>
+        <tr>
+          <th>産地</th>
+          <th>商品名</th>
+          <th>規格</th>
+          <th>入数</th>
+          <th>単価</th>
+          <th>数量</th>
+          <th>小計</th>
+        </tr>
       </thead>
       <tbody></tbody>
     </table>
-
-    <div class="totalArea">合計：¥<span id="grandTotal">0</span></div>
 
     <div style="margin-top:12px;text-align:right">
       <button id="btnSubmit" class="btn">発注する</button>
@@ -51,26 +208,52 @@
   </div>
 
   <!-- 注文履歴 -->
-  <div id="historySection" class="card">
-    <h3>注文履歴</h3>
+  <div id="historySection" class="card" style="display:none;">
+    <h3 style="margin-top:0">注文履歴</h3>
+
     <div class="filter">
       <input id="filterNumber" placeholder="店番で検索" style="width:160px">
-      <input id="filterName" placeholder="店舗名検索" style="width:200px">
+      <input id="filterName" placeholder="発注者名検索" style="width:200px">
       <button id="btnFilter" class="btn ghost">フィルタ</button>
       <button id="btnClear" class="btn ghost">解除</button>
       <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
     </div>
+
     <div style="overflow:auto;max-height:420px">
+      <div class="historyHeader">
+        <div id="historyTotal" class="totalArea">
+          合計：¥<span id="historyTotalAmount">0</span>
+        </div>
+        <div class="small" style="margin-left:8px;color:#666">（表示中の合計）</div>
+      </div>
+
       <table id="ordersTable">
-        <thead><tr><th>日時</th><th>店番</th><th>店舗名</th><th>商品名</th><th>産地</th><th>規格</th><th>入り数</th><th>単価</th><th>数量</th><th>小計</th></tr></thead>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>日時</th>
+            <th>店番</th>
+            <th>店舗名</th>
+            <th>商品名</th>
+            <th>産地</th>
+            <th>規格</th>
+            <th>入数</th>
+            <th>単価</th>
+            <th>数量</th>
+            <th>小計</th>
+            <th>操作</th>
+          </tr>
+        </thead>
         <tbody></tbody>
       </table>
     </div>
   </div>
+
 </div>
 
 <script>
-const API_BASE = 'https://script.google.com/macros/s/AKfycbxOotTqGBxFi_uPSVfUZl5MI_A02NFxC7dULTN9vu6yJtxytfxKGSrGKGl1nxFG8CY_/exec'; // あなたのGAS URLに変更
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzsxoLhzuBrPbVdL5PA4Q6AWbfFbKXBvSK0aWwWNcwsunzn9c9wlCJ-aLYbVn5T7Wg/exec';
+
 const tbody = document.querySelector('#orderTable tbody');
 const grandTotalEl = document.getElementById('grandTotal');
 const btnHistory = document.getElementById('btnHistory');
@@ -78,34 +261,46 @@ const btnSubmit = document.getElementById('btnSubmit');
 const storeNumberEl = document.getElementById('storeNumber');
 const nameEl = document.getElementById('name');
 const historySection = document.getElementById('historySection');
-
 let products = [];
 let orders = [];
 
 function escapeHtml(s){return String(s||'').replace(/[&<>"]+/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c));}
 
-async function apiGetProducts(){
-  const res = await fetch(API_BASE+'?action=getProducts');
-  return res.json();
-}
-
-async function apiGetOrders(){
-  const res = await fetch(API_BASE+'?action=getOrders');
-  return res.json();
-}
+async function apiGetProducts(){const res = await fetch(API_BASE+'?action=getProducts');return res.json();}
+async function apiGetOrders(){const res = await fetch(API_BASE+'?action=getOrders');return res.json();}
 
 function renderTable(){
   tbody.innerHTML = '';
+  const isMobile = window.innerWidth <= 600;
+
   products.forEach((p,i)=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${escapeHtml(p.origin)}</td>
-      <td>${escapeHtml(p.name)}</td>
-      <td>${escapeHtml(p.spec||'')}</td>
-      <td>${p.pack}</td>
-      <td>¥${Number(p.price).toLocaleString()}</td>
-      <td><input type="number" min="0" value="0" data-index="${i}"></td>
-      <td class="subtotal" id="sub${i}">¥0</td>`;
+
+    if(isMobile){
+      tr.innerHTML = `
+        <td colspan="7">
+          <div class="card-row1">${escapeHtml(p.name)}（${escapeHtml(p.origin)}）</div>
+          <div class="card-row2">
+            <span>規格：${escapeHtml(p.spec || '')}</span>
+            <span>入数：${p.pack}</span>
+            <span>単価：¥${Number(p.price).toLocaleString()}</span>
+          </div>
+          <div class="card-row3">
+            数量：<input type="number" min="0" value="0" data-index="${i}">
+            <span class="subtotal" id="sub${i}">¥0</span>
+          </div>
+        </td>`;
+    } else {
+      tr.innerHTML = `
+        <td>${escapeHtml(p.origin)}</td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(p.spec||'')}</td>
+        <td>${p.pack}</td>
+        <td>¥${Number(p.price).toLocaleString()}</td>
+        <td><input type="number" min="0" value="0" data-index="${i}"></td>
+        <td class="subtotal" id="sub${i}">¥0</td>`;
+    }
+
     tbody.appendChild(tr);
   });
 }
@@ -127,7 +322,6 @@ function attachEvents(){
   });
 }
 
-// ====== 発注処理 ======
 btnSubmit.onclick = async ()=>{
   const storeNumber = storeNumberEl.value.trim();
   const name = nameEl.value.trim();
@@ -138,6 +332,7 @@ btnSubmit.onclick = async ()=>{
     const qty = Number(document.querySelector(`input[data-index="${i}"]`).value)||0;
     if(qty>0){
       return {
+        id: Date.now() + '_' + storeNumber,
         productName:p.name, origin:p.origin, spec:p.spec,
         pack:p.pack, price:p.price, quantity:qty,
         subtotal:p.pack*p.price*qty
@@ -145,6 +340,7 @@ btnSubmit.onclick = async ()=>{
     }
     return null;
   }).filter(x=>x);
+
   if(ordersData.length===0) return alert('数量を入力してください');
 
   try{
@@ -157,12 +353,11 @@ btnSubmit.onclick = async ()=>{
       alert('発注を送信しました');
       document.querySelectorAll('input[type=number]').forEach(i=>i.value=0);
       calcTotals();
-      await loadOrders(); // 履歴更新
+      await loadOrders();
     }else alert('送信に失敗しました');
   }catch(e){ alert('通信エラー: '+e.message); }
 };
 
-// ====== 履歴表示処理 ======
 const ordersTbody = document.querySelector('#ordersTable tbody');
 const ordersCountEl = document.getElementById('ordersCount');
 const filterNumber = document.getElementById('filterNumber');
@@ -176,22 +371,144 @@ async function loadOrders(){
     if(!j.success) throw new Error(j.error||'API error');
     orders = j.orders;
     renderOrders(orders);
-  }catch(e){
-    console.error(e);
-    alert('注文履歴の取得に失敗しました: '+e.message);
-  }
+  }catch(e){alert('注文履歴の取得に失敗しました: '+e.message);}
+}
+
+function updateHistoryTotal(list){
+  let total = 0;
+  list.forEach(o=>{
+    let st = 0;
+    if(o.subtotal != null && o.subtotal !== ''){
+      const num = String(o.subtotal).replace(/[^\d.-]+/g, '');
+      st = Number(num) || 0;
+    } else {
+      const price = Number(o.price) || 0;
+      const pack = Number(o.pack) || 1;
+      const qty = Number(o.quantity) || 0;
+      st = price * pack * qty;
+    }
+    total += st;
+  });
+  document.getElementById('historyTotalAmount').textContent = total.toLocaleString();
 }
 
 function renderOrders(list){
-  ordersTbody.innerHTML='';
-  list.forEach(o=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${escapeHtml(o.date)}</td><td>${escapeHtml(o.number)}</td><td>${escapeHtml(o.name)}</td>
-    <td>${escapeHtml(o.productName)}</td><td>${escapeHtml(o.origin)}</td><td>${escapeHtml(o.spec)}</td>
-    <td>${escapeHtml(o.pack)}</td><td>${escapeHtml(o.price)}</td><td>${escapeHtml(o.quantity)}</td><td>${escapeHtml(o.subtotal)}</td>`;
+  ordersTbody.innerHTML = '';
+  const isMobile = window.innerWidth <= 600;
+
+  list.forEach((o, displayIndex) => {
+    const tr = document.createElement('tr');
+
+    const realIndex = orders.findIndex(or =>
+      or.date === o.date &&
+      or.number === o.number &&
+      or.name === o.name &&
+      or.productName === o.productName &&
+      String(or.quantity) === String(o.quantity) &&
+      String(or.price) === String(o.price)
+    );
+
+    if(isMobile){
+      tr.innerHTML = `
+      <td colspan="12">
+        <div class="hist-row1">${escapeHtml(o.number||'')}:${escapeHtml(o.name||'')}</div>
+        <div class="hist-row2">${escapeHtml(o.productName||'')}（${escapeHtml(o.origin||'')}）</div>
+        <div class="hist-row3">
+          <span>規格：${escapeHtml(o.spec||'')}</span>
+          <span>入数：${escapeHtml(o.pack||'')}</span>
+          <span>単価：¥${Number(o.price).toLocaleString()}</span>
+        </div>
+        <div class="hist-row4">
+          <div>数量：${escapeHtml(o.quantity||'')}</div>
+          <div class="subtotal">¥${(Number(o.price||0) * Number(o.pack||1) * Number(o.quantity||0)).toLocaleString()}</div>
+          <div class="hist-actions">
+            <button class="btn ghost small btn-edit" data-index="${realIndex}">修正</button>
+            <button class="btn ghost small btn-del" data-index="${realIndex}">削除</button>
+          </div>
+        </div>
+      </td>`;
+    } else {
+      tr.innerHTML = `
+        <td>${realIndex + 1}</td>
+        <td>${escapeHtml(o.date || '')}</td>
+        <td>${escapeHtml(o.number || '')}</td>
+        <td>${escapeHtml(o.name || '')}</td>
+        <td>${escapeHtml(o.productName || '')}</td>
+        <td>${escapeHtml(o.origin || '')}</td>
+        <td>${escapeHtml(o.spec || '')}</td>
+        <td>${escapeHtml(o.pack || '')}</td>
+        <td>${escapeHtml(o.price || '')}</td>
+        <td>${escapeHtml(o.quantity || '')}</td>
+        <td>${escapeHtml(o.subtotal || '')}</td>
+        <td>
+          <button class="btn ghost small btn-edit" data-index="${realIndex}">修正</button>
+          <button class="btn ghost small btn-del" data-index="${realIndex}">削除</button>
+        </td>`;
+    }
+
     ordersTbody.appendChild(tr);
   });
-  ordersCountEl.textContent=list.length;
+
+  ordersCountEl.textContent = list.length;
+  updateHistoryTotal(list);
+
+  document.querySelectorAll('.btn-del').forEach(btn => {
+    btn.onclick = async () => {
+      const rowIndex = Number(btn.dataset.index);
+      if(isNaN(rowIndex)) return alert('削除対象を特定できません');
+      if(!confirm('削除してよろしいですか？')) return;
+
+      try {
+        const res = await fetch(API_BASE, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'deleteOrder', rowIndex })
+        });
+        const j = await res.json();
+        if (j.success) {
+          alert('削除しました');
+          await loadOrders();
+        } else {
+          alert('削除に失敗しました');
+        }
+      } catch (e) {
+        alert('通信エラー:' + e.message);
+      }
+    };
+  });
+
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.onclick = async () => {
+      const rowIndex = Number(btn.dataset.index);
+      if(isNaN(rowIndex)) return alert('修正対象を特定できません');
+
+      const order = orders[rowIndex];
+      if (!order) return alert('データを取得できません');
+
+      const newQty = prompt('新しい数量を入力', order.quantity);
+      if (newQty === null) return;
+
+      const updated = {
+        ...order,
+        quantity: Number(newQty),
+        subtotal: order.price * order.pack * Number(newQty)
+      };
+      await updateOrder(updated, rowIndex);
+    };
+  });
+}
+
+async function updateOrder(order, rowIndex){
+  try{
+    const res = await fetch(API_BASE,{
+      method:'POST',
+      body:JSON.stringify({action:'updateOrder', rowIndex, order})
+    });
+    const j = await res.json();
+    if(j.success){
+      alert('修正を保存しました');
+      await loadOrders();
+    }else alert('修正に失敗しました');
+  }catch(e){alert('通信エラー:'+e.message);}
 }
 
 btnFilter.onclick=()=>{
@@ -204,9 +521,13 @@ btnFilter.onclick=()=>{
   });
   renderOrders(filtered);
 };
-btnClear.onclick=()=>{filterNumber.value='';filterName.value='';renderOrders(orders);};
 
-// 履歴ボタン切り替え
+btnClear.onclick=()=>{
+  filterNumber.value='';
+  filterName.value='';
+  renderOrders(orders);
+};
+
 btnHistory.onclick=async ()=>{
   if(historySection.style.display==='none'){
     historySection.style.display='block';
@@ -216,7 +537,6 @@ btnHistory.onclick=async ()=>{
   }
 };
 
-// 初期ロード
 (async()=>{
   try{
     const j = await apiGetProducts();
@@ -224,10 +544,14 @@ btnHistory.onclick=async ()=>{
     products = j.products;
     renderTable();
     attachEvents();
-  }catch(e){
-    alert('商品データの読み込みに失敗しました: '+e.message);
-  }
+  }catch(e){alert('商品データの読み込みに失敗しました: '+e.message);}
 })();
+
+window.addEventListener('resize', ()=>{
+  renderTable();
+  attachEvents();
+});
 </script>
+
 </body>
 </html>
