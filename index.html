@@ -27,7 +27,7 @@
   #historySection .totalArea {
     position: sticky;
     top: 0;
-    background: #d8d9f9;
+    background: rgb(239, 245, 247);
     z-index: 5;
     padding: 8px 0;
     border-bottom: 1px solid #eef2f7;
@@ -39,7 +39,7 @@
   .historyHeader {
     position: sticky;
     top: 0;
-    background: #d8d9f9;
+    background: #fff;
     z-index: 5;
     padding: 8px 0;
     border-bottom: 1px solid #eef2f7;
@@ -70,7 +70,12 @@
 @media (max-width: 600px) {
   #orderTable {
     display: block;
-  }
+    }
+    .orderArea{
+      display: none;
+    }
+    
+  
 
   #orderTable thead {
     display: none;
@@ -123,15 +128,7 @@
     color: #222;
   }
 
-}
   
-
-
-  .subtotal {
-    font-weight: 700;
-    color: #222;
-  }
-
   .btn.small { padding: 4px 8px; font-size: 0.78rem; }
 }
 
@@ -178,8 +175,8 @@
     <h3 style="margin-top:0">注文履歴</h3>
 
     <div class="filter">
-      <input id="filterNumber" placeholder="店番で検索" style="width:160px">
-      <input id="filterName" placeholder="発注者名検索" style="width:200px">
+      <input id="filterNumber" placeholder="店番で検索" style="width:80px">
+      <input id="filterName" placeholder="発注者名検索" style="width:100px">
       <button id="btnFilter" class="btn ghost">フィルタ</button>
       <button id="btnClear" class="btn ghost">解除</button>
       <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
@@ -194,10 +191,8 @@
       </div>
 
       <table id="ordersTable">
-        <thead>
+        <thead class="orderArea">
           <tr>
-            <th>ID</th>
-            <th>日時</th>
             <th>店番</th>
             <th>店舗名</th>
             <th>商品名</th>
