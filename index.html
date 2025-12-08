@@ -175,8 +175,8 @@
     <h3 style="margin-top:0">注文履歴</h3>
 
     <div class="filter">
-      <input id="filterNumber" placeholder="店番で検索" style="width:80px">
-      <input id="filterName" placeholder="発注者名検索" style="width:100px">
+      <input id="filterNumber" placeholder="店番検索" style="width:60px">
+      <input id="filterName" placeholder="発注者名検索" style="width:80px">
       <button id="btnFilter" class="btn ghost">フィルタ</button>
       <button id="btnClear" class="btn ghost">解除</button>
       <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
@@ -389,9 +389,9 @@ function renderOrders(list){
         </div>
       </td>`;
     } else {
+      /*<td>${realIndex + 1}</td>
+      <td>${escapeHtml(o.date || '')}</td>*/
       tr.innerHTML = `
-        <td>${realIndex + 1}</td>
-        <td>${escapeHtml(o.date || '')}</td>
         <td>${escapeHtml(o.number || '')}</td>
         <td>${escapeHtml(o.name || '')}</td>
         <td>${escapeHtml(o.productName || '')}</td>
