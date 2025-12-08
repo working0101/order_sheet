@@ -182,12 +182,12 @@
       <div style="margin-left:auto" class="small">全件: <span id="ordersCount">0</span></div>
     </div>
 
-    <div style="overflow:auto;max-height:420px">
+    <div style="overflow:auto;max-height:420px" width:600PX>
       <div class="historyHeader">
         <div id="historyTotal" class="totalArea">
           合計：¥<span id="historyTotalAmount">0</span>
         </div>
-        <div class="small" style="margin-left:8px;color:#666">（表示中の合計）</div>
+        <div class="small" style="margin-left:8px;color:#666">表示計</div>
       </div>
 
       <table id="ordersTable">
@@ -247,7 +247,7 @@ function renderTable(){
             <span>単価：¥${Number(p.price).toLocaleString()}</span>
           </div>
           <div class="card-row3">
-            数量：<input type="number" min="0" value="0" data-index="${i}">
+            数量：<input type="number" min="0" value="" data-index="${i}">
             <span class="subtotal" id="sub${i}">¥0</span>
           </div>
         </td>`;
@@ -258,7 +258,7 @@ function renderTable(){
         <td>${escapeHtml(p.spec||'')}</td>
         <td>${p.pack}</td>
         <td>¥${Number(p.price).toLocaleString()}</td>
-        <td><input type="number" min="0" value="0" data-index="${i}"></td>
+        <td><input type="number" min="0" value="" data-index="${i}"></td>
         <td class="subtotal" id="sub${i}">¥0</td>`;
     }
 
